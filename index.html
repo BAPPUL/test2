@@ -641,6 +641,42 @@
     }
 
     startNewGame();
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+  // 2. ⚠️ 파이어베이스 웹 앱 만들고 나온 내 주소 복사해서 여기에 덮어쓰기!
+  const firebaseConfig = {
+    apiKey: "AIzaSy...",
+    authDomain: "내프로젝트.firebaseapp.com",
+    databaseURL: "https://내프로젝트-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "내프로젝트-id",
+    storageBucket: "내프로젝트.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:12345:web:abcde"
+  };
+
+  // 3. 파이어베이스 연결 시작
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+
+  // 4. 게임 클리어했을 때 점수 저장하는 함수 (예시)
+  // 스도쿠 다 맞춘 순간에 이 함수를 실행시키면 돼!
+  function saveGameResult(nickname, clearTime) {
+    database.ref('ranking').push({
+      name: nickname,
+      time: clearTime, // 초 단위 (예: 90)
+      date: Date.now()
+    }).then(() => {
+      alert("🏆 랭킹 등록 완료!");
+    });
+  }
 </script>
 </body>
 </html>
+
+
+
+
+
+
