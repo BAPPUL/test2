@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mellow TV Premium Sudoku</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
@@ -30,13 +30,17 @@
             align-items: center;
             min-height: 100vh;
             font-family: 'Arial', sans-serif;
+            padding: 10px;
         }
 
+        /* [모바일 대응] 고정 너비 제거 및 반응형 패딩, flex 방향 설정 */
         .game-container {
-            width: 1100px;
+            width: 100%;
+            max-width: 1100px;
             display: flex;
-            gap: 40px;
-            padding: 30px;
+            flex-direction: row;
+            gap: 30px;
+            padding: 25px;
             background: rgba(255, 255, 255, 0.03);
             border-radius: 20px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
@@ -52,31 +56,34 @@
 
         .board-container {
             background: white;
-            padding: 8px;
+            padding: 6px;
             border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             border: 3px solid var(--mellow-light-purple);
+            max-width: 100%;
         }
 
+        /* [모바일 대응] 고정 px 크기 대신 화면 비율(vmin)을 사용하여 유연하게 줄어들도록 변경 */
         .grid {
             display: grid;
-            grid-template-columns: repeat(9, 55px);
-            grid-template-rows: repeat(9, 55px);
+            grid-template-columns: repeat(9, min(55px, 9.5vw));
+            grid-template-rows: repeat(9, min(55px, 9.5vw));
             background-color: var(--mellow-deep-purple);
             gap: 1px;
             border: 3px solid var(--mellow-deep-purple);
+            touch-action: manipulation; /* 모바일 더블탭 줌 방지 */
         }
 
         .cell {
             background: white;
             position: relative;
-            width: 55px;
-            height: 55px;
             cursor: pointer;
             user-select: none;
+            -webkit-user-select: none;
             transition: background-color 0.1s;
         }
 
+        /* [모바일 대응] 폰트 크기도 셀 크기에 맞춰 유동적으로 변화 */
         .cell-value {
             position: absolute;
             width: 100%;
@@ -84,7 +91,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: min(24px, 5.5vw);
             font-weight: bold;
             color: #2D3748;
             z-index: 2;
@@ -97,12 +104,12 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
-            padding: 2px;
+            padding: 1px;
             z-index: 1;
         }
 
         .memo-digit {
-            font-size: 10px;
+            font-size: min(10px, 2.2vw);
             color: #718096;
             font-weight: bold;
             display: flex;
@@ -122,10 +129,13 @@
         .cell.error { background-color: #FFF5F5; }
         .cell.error .cell-value { color: #E53E3E !important; }
 
+        /* [모바일 대응] 컨트롤 패널 너비 설정 유연화 */
         .control-panel {
-            width: 380px;
+            width: 100%;
+            max-width: 380px;
             display: flex;
             flex-direction: column;
+            justify-content: center;
         }
 
         .header-logo {
@@ -151,7 +161,7 @@
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 10px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .action-btn {
@@ -161,6 +171,8 @@
             color: var(--mellow-light-purple);
             cursor: pointer;
             font-size: 13px;
+            user-select: none;
+            -webkit-user-select: none;
         }
         .action-btn i {
             background: rgba(214, 188, 250, 0.1);
@@ -185,13 +197,15 @@
         .num-btn {
             background: rgba(214, 188, 250, 0.15);
             border: 1px solid rgba(214, 188, 250, 0.2);
-            height: 70px;
+            height: min(70px, 14vw); /* 모바일에서는 키패드 높이도 비율에 맞춰 축소 */
             border-radius: 10px;
             color: #E9D8FD;
             font-size: 28px;
             font-weight: bold;
             cursor: pointer;
             transition: 0.15s;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent; /* 모바일 터치 하이라이트 제거 */
         }
         .num-btn:hover { background: var(--mellow-deep-purple); color: white; }
         .num-btn.completed { background: var(--success-green); color: white; }
@@ -212,10 +226,12 @@
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 14px rgba(107, 70, 193, 0.4);
+            -webkit-tap-highlight-color: transparent;
         }
         .new-game-btn { background: linear-gradient(135deg, #B794F4 0%, var(--mellow-deep-purple) 100%); }
         .rank-btn { background: linear-gradient(135deg, #FFD700 0%, #D4AF37 100%); color: #1a102f; }
         
+        /* 모달 창 크기 반응형화 */
         .modal {
             display: none;
             position: fixed;
@@ -223,24 +239,52 @@
             background: rgba(0, 0, 0, 0.8);
             z-index: 100;
             justify-content: center; align-items: center;
+            padding: 20px;
         }
         .modal-content {
             background: #251842;
             border: 2px solid var(--mellow-light-purple);
-            padding: 30px;
+            padding: 25px;
             border-radius: 15px;
-            width: 480px;
+            width: 100%;
+            max-width: 480px;
             color: white;
             text-align: center;
             box-shadow: 0 0 30px rgba(214, 188, 250, 0.3);
         }
-        .modal h2 { margin-top: 0; color: var(--mellow-yellow); }
+        .modal h2 { margin-top: 0; color: var(--mellow-yellow); font-size: 22px; }
         .rank-list { margin: 20px 0; text-align: left; max-height: 280px; overflow-y: auto; }
-        .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 14px; }
         .rank-item:first-child { color: var(--mellow-yellow); font-weight: bold; }
-        .rank-info { display: flex; gap: 15px; font-size: 14px; color: #cbd5e1; }
+        .rank-info { display: flex; gap: 10px; font-size: 13px; color: #cbd5e1; align-items: center; }
         .rank-time { color: #fff; font-weight: bold; }
-        .close-btn { background: var(--mellow-deep-purple); border: none; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+        .close-btn { background: var(--mellow-deep-purple); border: none; color: white; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+
+        /* --- 📱 미디어 쿼리: 모바일 화면 (태블릿 포함 가로 800px 이하일 때 세로 배치) --- */
+        @media (max-width: 800px) {
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+                padding: 15px;
+                border-radius: 12px;
+            }
+            .header-logo {
+                text-align: center;
+                margin-bottom: 15px;
+                font-size: 22px;
+            }
+            .control-panel {
+                max-width: 100%;
+            }
+            .stats-bar {
+                font-size: 16px;
+                margin-bottom: 15px;
+            }
+            .action-buttons {
+                margin-bottom: 20px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -305,7 +349,6 @@
     let timerInterval = null;
     let timeSeconds = 0;
 
-    // --- 🔊 Web Audio API 기반 오디오 실시간 합성 효과음 로직 ---
     let audioCtx = null;
 
     function initAudio() {
@@ -326,33 +369,29 @@
         const now = audioCtx.currentTime;
 
         if (type === 'memo') {
-            // 메모 입력 시 가볍고 짧은 플럭 음
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(587.33, now); // D5
+            osc.frequency.setValueAtTime(587.33, now); 
             gainNode.gain.setValueAtTime(0.1, now);
             gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
             osc.start(now);
             osc.stop(now + 0.08);
         } else if (type === 'correct') {
-            // 정답 입력 시 경쾌하고 높은 두 번의 비프음
             osc.type = 'triangle';
-            osc.frequency.setValueAtTime(523.25, now); // C5
-            osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+            osc.frequency.setValueAtTime(523.25, now); 
+            osc.frequency.setValueAtTime(659.25, now + 0.08); 
             gainNode.gain.setValueAtTime(0.15, now);
             gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
             osc.start(now);
             osc.stop(now + 0.25);
         } else if (type === 'error') {
-            // 오답 입력 시 무겁고 낮은 부저 음
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(130.81, now); // C3
+            osc.frequency.setValueAtTime(130.81, now); 
             gainNode.gain.setValueAtTime(0.2, now);
             gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
             osc.start(now);
             osc.stop(now + 0.3);
         } else if (type === 'clear') {
-            // 클리어 시 화려한 아르페지오 멜로디 효과음
-            const notes = [523.25, 659.25, 783.99, 1046.50]; // C-E-G-C 승행화음
+            const notes = [523.25, 659.25, 783.99, 1046.50]; 
             notes.forEach((freq, i) => {
                 const o = audioCtx.createOscillator();
                 const g = audioCtx.createGain();
@@ -368,7 +407,6 @@
         }
     }
 
-    // --- 🎲 진짜 실시간 백트래킹 랜덤 스도쿠 생성 알고리즘 ---
     function generateSudoku() {
         const mat = Array.from(Array(9), () => Array(9).fill(0));
         fillGrid(mat);
@@ -455,7 +493,6 @@
         }
     }
 
-    // --- ✨ 가로세로 십자 및 동일 숫자 실시간 하이라이트 ---
     function selectCell(r, c, element) {
         selectedCell = { r, c, element };
         const clickedValue = element.querySelector('.cell-value').innerText;
@@ -477,20 +514,19 @@
         element.classList.add('selected');
     }
 
-    // --- 🛠️ 입력 처리 (효과음 연동 통합본) ---
     function inputNumber(num) {
         if (!selectedCell || selectedCell.element.classList.contains('fixed')) return;
         const { r, c, element } = selectedCell;
 
         if (memoMode) {
-            playSound('memo'); // 메모 사운드
+            playSound('memo'); 
             const memoDigits = element.querySelectorAll('.memo-digit');
             const target = memoDigits[num - 1];
             target.innerText = target.innerText ? '' : num;
         } else {
             const valEl = element.querySelector('.cell-value');
             if (currentSolution[r][c] === num) {
-                playSound('correct'); // 정답 사운드
+                playSound('correct'); 
                 board[r][c] = num;
                 valEl.innerText = num;
                 element.classList.remove('error');
@@ -500,10 +536,9 @@
                 
                 selectCell(r, c, element);
                 updateNumpadCompletion();
-                updateNumpadCompletion();
-        checkGameClear();
+                checkGameClear();
             } else {
-                playSound('error'); // 오답 사운드
+                playSound('error'); 
                 element.classList.add('error');
                 valEl.innerText = num;
                 mistakes++;
@@ -549,7 +584,6 @@
         checkGameClear();
     }
 
-
     function updateNumpadCompletion() {
         const counts = Array(10).fill(0);
         for (let r = 0; r < 9; r++) {
@@ -582,7 +616,7 @@
             }
         }
         clearInterval(timerInterval);
-        playSound('clear'); // 게임 클리어 세레머니 사운드
+        playSound('clear'); 
         
         setTimeout(() => {
             const isConfirm = confirm("🎉 축하합니다! 스도쿠를 클리어했습니다!\n\n실시간 명예의 전당에 등록하시겠습니까?");
@@ -631,7 +665,6 @@
         startNewGame();
     }
 
-    // --- Firebase 설정 파트 ---
     const firebaseConfig = {
         apiKey: "AIzaSyCah6vX4Ci1hcjAlMa2o52gAWB6JFepNkk",
         authDomain: "mellowtvsudoku.firebaseapp.com",
@@ -707,7 +740,6 @@
         document.getElementById('rankModal').style.display = 'none';
     }
 
-    // 브라우저 첫 인터랙션 시 오디오 환경 활성화 (크롬 자동재생 제한 우회)
     window.addEventListener('click', initAudio, { once: true });
     window.onload = startNewGame;
 </script>
