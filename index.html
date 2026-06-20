@@ -304,13 +304,75 @@
     let timerInterval = null;
     let timeSeconds = 0;
 
+    // --- 🔊 Web Audio API 기반 오디오 실시간 합성 효과음 로직 ---
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    function playSound(type) {
+        initAudio();
+        if (!audioCtx) return;
+
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'memo') {
+            // 메모 입력 시 가볍고 짧은 플럭 음
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(587.33, now); // D5
+            gainNode.gain.setValueAtTime(0.1, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+            osc.start(now);
+            osc.stop(now + 0.08);
+        } else if (type === 'correct') {
+            // 정답 입력 시 경쾌하고 높은 두 번의 비프음
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(523.25, now); // C5
+            osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+            gainNode.gain.setValueAtTime(0.15, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        } else if (type === 'error') {
+            // 오답 입력 시 무겁고 낮은 부저 음
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(130.81, now); // C3
+            gainNode.gain.setValueAtTime(0.2, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+        } else if (type === 'clear') {
+            // 클리어 시 화려한 아르페지오 멜로디 효과음
+            const notes = [523.25, 659.25, 783.99, 1046.50]; // C-E-G-C 승행화음
+            notes.forEach((freq, i) => {
+                const o = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                o.connect(g);
+                g.connect(audioCtx.destination);
+                o.type = 'sine';
+                o.frequency.setValueAtTime(freq, now + (i * 0.1));
+                g.gain.setValueAtTime(0.15, now + (i * 0.1));
+                g.gain.exponentialRampToValueAtTime(0.01, now + (i * 0.1) + 0.4);
+                o.start(now + (i * 0.1));
+                o.stop(now + (i * 0.1) + 0.4);
+            });
+        }
+    }
+
     // --- 🎲 진짜 실시간 백트래킹 랜덤 스도쿠 생성 알고리즘 ---
     function generateSudoku() {
         const mat = Array.from(Array(9), () => Array(9).fill(0));
         fillGrid(mat);
-        currentSolution = mat.map(row => [...row]); // 정답 배열 카피
+        currentSolution = mat.map(row => [...row]);
         
-        // 유저 플레이용 문제판 만들기 (40개 구멍 뚫기)
         const quiz = mat.map(row => [...row]);
         let count = 40; 
         while (count > 0) {
@@ -392,7 +454,7 @@
         }
     }
 
-    // --- ✨ 가로세로 십자 및 동일 숫자 하이라이트 ---
+    // --- ✨ 가로세로 십자 및 동일 숫자 실시간 하이라이트 ---
     function selectCell(r, c, element) {
         selectedCell = { r, c, element };
         const clickedValue = element.querySelector('.cell-value').innerText;
@@ -414,23 +476,31 @@
         element.classList.add('selected');
     }
 
+    // --- 🛠️ 입력 처리 (효과음 연동 통합본) ---
     function inputNumber(num) {
         if (!selectedCell || selectedCell.element.classList.contains('fixed')) return;
         const { r, c, element } = selectedCell;
 
         if (memoMode) {
+            playSound('memo'); // 메모 사운드
             const memoDigits = element.querySelectorAll('.memo-digit');
             const target = memoDigits[num - 1];
             target.innerText = target.innerText ? '' : num;
         } else {
             const valEl = element.querySelector('.cell-value');
             if (currentSolution[r][c] === num) {
+                playSound('correct'); // 정답 사운드
                 board[r][c] = num;
                 valEl.innerText = num;
                 element.classList.remove('error');
+                
+                element.classList.add('fixed');
+                element.querySelectorAll('.memo-digit').forEach(el => el.innerText = '');
+                
                 selectCell(r, c, element);
                 checkGameClear();
             } else {
+                playSound('error'); // 오답 사운드
                 element.classList.add('error');
                 valEl.innerText = num;
                 mistakes++;
@@ -463,10 +533,12 @@
         if (hintsLeft <= 0 || !selectedCell || selectedCell.element.classList.contains('fixed')) return;
         const { r, c, element } = selectedCell;
         const correctVal = currentSolution[r][c];
+        playSound('correct');
         board[r][c] = correctVal;
         element.querySelector('.cell-value').innerText = correctVal;
         element.classList.add('fixed');
         element.classList.remove('error');
+        element.querySelectorAll('.memo-digit').forEach(el => el.innerText = '');
         hintsLeft--;
         document.getElementById('hint-stats').innerText = `${hintsLeft}/3`;
         selectCell(r, c, element);
@@ -491,6 +563,7 @@
             }
         }
         clearInterval(timerInterval);
+        playSound('clear'); // 게임 클리어 세레머니 사운드
         
         setTimeout(() => {
             const isConfirm = confirm("🎉 축하합니다! 스도쿠를 클리어했습니다!\n\n실시간 명예의 전당에 등록하시겠습니까?");
@@ -524,7 +597,7 @@
     }
 
     function startNewGame() {
-        generateSudoku(); // 완전 난수 기반 맵 자동 생성 함수 가동
+        generateSudoku(); 
         mistakes = 0;
         hintsLeft = 3;
         selectedCell = null;
@@ -538,7 +611,7 @@
         startNewGame();
     }
 
-    // --- Firebase 설정 완료 정보 ---
+    // --- Firebase 설정 파트 ---
     const firebaseConfig = {
         apiKey: "AIzaSyCah6vX4Ci1hcjAlMa2o52gAWB6JFepNkk",
         authDomain: "mellowtvsudoku.firebaseapp.com",
@@ -614,6 +687,8 @@
         document.getElementById('rankModal').style.display = 'none';
     }
 
+    // 브라우저 첫 인터랙션 시 오디오 환경 활성화 (크롬 자동재생 제한 우회)
+    window.addEventListener('click', initAudio, { once: true });
     window.onload = startNewGame;
 </script>
 </body>
