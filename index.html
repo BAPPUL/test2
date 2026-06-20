@@ -3,10 +3,644 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HANDSOME GUY</title>
+    <title>Mellow TV Premium Sudoku</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #1a102f;
+            --mellow-light-purple: #D6BCFA;
+            --mellow-deep-purple: #6B46C1;
+            --mellow-yellow: #FFD700;
+            
+            --highlight-cross: #F3E8FF;
+            --highlight-match: #FEFCBF;
+            --selected-color: #B794F4;
+            --success-green: #2ED573;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #3c236e 100%);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .game-container {
+            width: 1100px;
+            display: flex;
+            gap: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .game-section {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .board-container {
+            background: white;
+            padding: 8px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 3px solid var(--mellow-light-purple);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(9, 55px);
+            grid-template-rows: repeat(9, 55px);
+            background-color: var(--mellow-deep-purple);
+            gap: 1px;
+            border: 3px solid var(--mellow-deep-purple);
+        }
+
+        .cell {
+            background: white;
+            position: relative;
+            width: 55px;
+            height: 55px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.1s;
+        }
+
+        .cell-value {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #2D3748;
+            z-index: 2;
+        }
+
+        .memo-grid {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            padding: 2px;
+            z-index: 1;
+        }
+
+        .memo-digit {
+            font-size: 10px;
+            color: #718096;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cell.border-right-thick { border-right: 3px solid var(--mellow-deep-purple); }
+        .cell.border-bottom-thick { border-bottom: 3px solid var(--mellow-deep-purple); }
+
+        .cell.cross-hl { background-color: var(--highlight-cross); }
+        .cell.match-hl { background-color: var(--highlight-match) !important; }
+        .cell.match-hl .cell-value { color: #1A202C; }
+        .cell.selected { background-color: var(--selected-color) !important; }
+        .cell.selected .cell-value { color: white !important; }
+        .cell.selected .memo-digit { color: #fff; opacity: 0.8; }
+        .cell.fixed .cell-value { color: var(--mellow-deep-purple); }
+        .cell.fixed { background: #FAF5FF; }
+        .cell.error .cell-value { color: #E53E3E !important; }
+        .cell.error { background-color: #FFF5F5; }
+
+        .cell.completed-num .cell-value { color: var(--success-green) !important; }
+
+        .control-panel {
+            width: 380px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-logo {
+            color: var(--mellow-light-purple);
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 0 0 12px rgba(214, 188, 250, 0.4);
+            letter-spacing: 1px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            color: #E9D8FD;
+            font-size: 18px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(214, 188, 250, 0.2);
+            padding-bottom: 10px;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--mellow-light-purple);
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .action-btn i {
+            background: rgba(214, 188, 250, 0.1);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 5px;
+            border: 1px solid rgba(214, 188, 250, 0.2);
+        }
+        .action-btn:hover i, .action-btn.active i { background: var(--mellow-deep-purple); color: white; }
+
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .num-btn {
+            background: rgba(214, 188, 250, 0.15);
+            border: 1px solid rgba(214, 188, 250, 0.2);
+            height: 70px;
+            border-radius: 10px;
+            color: #E9D8FD;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .num-btn:hover { background: var(--mellow-deep-purple); color: white; }
+        
+        .num-btn.completed {
+            background: var(--success-green) !important;
+            color: white !important;
+            border-color: var(--success-green) !important;
+        }
+
+        .new-game-btn {
+            background: linear-gradient(135deg, #B794F4 0%, var(--mellow-deep-purple) 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 25px;
+            box-shadow: 0 4px 14px rgba(107, 70, 193, 0.4);
+        }
+        .new-game-btn:hover { opacity: 0.9; }
+    </style>
 </head>
 <body>
-    <h1>BAPPUL IS HANDSOME GUY</h1>
-    <img src="https://i.imgur.com/XXwxXhc.jpg" alt="이미지 설명">
+
+<div class="game-container">
+    <div class="game-section">
+        <div class="board-container">
+            <div class="grid" id="sudoku-grid"></div>
+        </div>
+    </div>
+
+    <div class="control-panel">
+        <div class="header-logo">💫 MELLOW TV SUDOKU</div>
+        
+        <div class="stats-bar">
+            <span>실수: <span id="mistake-count">0/3</span></span>
+            <span>힌트: <span id="hint-stats">0/3</span></span>
+            <span>시간: <span id="timer">00:00</span></span>
+        </div>
+
+        <div class="action-buttons">
+            <div class="action-btn" onclick="erase()"><i class="fa-solid fa-eraser"></i>지우기</div>
+            <div class="action-btn" id="memo-toggle-btn" onclick="toggleMemo()"><i class="fa-solid fa-pencil"></i>메모 <span id="memo-status">OFF</span></div>
+            <div class="action-btn" onclick="useHint()"><i class="fa-solid fa-lightbulb"></i>힌트</div>
+            <div class="action-btn" onclick="startNewGame()"><i class="fa-solid fa-rotate"></i>초기화</div>
+        </div>
+
+        <div class="numpad">
+            <button class="num-btn" data-num="1" onclick="inputNumber(1)">1</button>
+            <button class="num-btn" data-num="2" onclick="inputNumber(2)">2</button>
+            <button class="num-btn" data-num="3" onclick="inputNumber(3)">3</button>
+            <button class="num-btn" data-num="4" onclick="inputNumber(4)">4</button>
+            <button class="num-btn" data-num="5" onclick="inputNumber(5)">5</button>
+            <button class="num-btn" data-num="6" onclick="inputNumber(6)">6</button>
+            <button class="num-btn" data-num="7" onclick="inputNumber(7)">7</button>
+            <button class="num-btn" data-num="8" onclick="inputNumber(8)">8</button>
+            <button class="num-btn" data-num="9" onclick="inputNumber(9)">9</button>
+        </div>
+
+        <button class="new-game-btn" onclick="startNewGame()">새 게임 시작하기</button>
+    </div>
+</div>
+
+<script>
+    const gridEl = document.getElementById('sudoku-grid');
+    const timerEl = document.getElementById('timer');
+    const mistakeEl = document.getElementById('mistake-count');
+    const memoBtn = document.getElementById('memo-toggle-btn');
+    const memoStatusTxt = document.getElementById('memo-status');
+    const hintStatsEl = document.getElementById('hint-stats');
+    
+    let selectedCell = null;
+    let mistakes = 0;
+    let seconds = 0;
+    let hintsUsed = 0; 
+    let timerInterval = null;
+    let isMemoMode = false;
+    let cellsArray = [];
+
+    let boardData = [];
+    let solution = [];
+    let memoData = [];
+
+    // --- 신규 사운드 합성 오디오 엔진 컨텍스트 선언 ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        const now = audioCtx.currentTime;
+
+        if (type === 'click') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(450, now);
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.04);
+        } 
+        else if (type === 'correct') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(587.33, now); // D5
+            osc.frequency.setValueAtTime(880.00, now + 0.07); // A5
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        } 
+        else if (type === 'error') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(140, now);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        } 
+        else if (type === 'hint') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.exponentialRampToValueAtTime(1300, now + 0.2);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        } 
+        else if (type === 'win') {
+            const notes = [523.25, 659.25, 783.99, 1046.50]; // C - E - G - C 도미솔도 화음
+            notes.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now + i * 0.08);
+                gain.gain.setValueAtTime(0.1, now + i * 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.35);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now + i * 0.08);
+                osc.stop(now + i * 0.08 + 0.35);
+            });
+        }
+    }
+
+    function isValid(board, r, c, val) {
+        for (let i = 0; i < 9; i++) {
+            if (board[r][i] === val || board[i][c] === val) return false;
+        }
+        const boxRow = Math.floor(r / 3) * 3;
+        const boxCol = Math.floor(c / 3) * 3;
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (board[boxRow + i][boxCol + j] === val) return false;
+            }
+        }
+        return true;
+    }
+
+    function solveSudoku(board) {
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (board[r][c] === 0) {
+                    const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+                    for (let num of nums) {
+                        if (isValid(board, r, c, num)) {
+                            board[r][c] = num;
+                            if (solveSudoku(board)) return true;
+                            board[r][c] = 0;
+                        }
+                    }
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function generateSudoku() {
+        const baseGrid = Array.from({ length: 9 }, () => Array(9).fill(0));
+        solveSudoku(baseGrid);
+        solution = baseGrid.map(row => [...row]);
+        
+        boardData = baseGrid.map(row => [...row]);
+        let cellsToRemove = 40; 
+        while (cellsToRemove > 0) {
+            const r = Math.floor(Math.random() * 9);
+            const c = Math.floor(Math.random() * 9);
+            if (boardData[r][c] !== 0) {
+                boardData[r][c] = 0;
+                cellsToRemove--;
+            }
+        }
+    }
+
+    function toggleMemo() {
+        isMemoMode = !isMemoMode;
+        playSound('click');
+        if(isMemoMode) {
+            memoBtn.classList.add('active');
+            memoStatusTxt.textContent = "ON";
+        } else {
+            memoBtn.classList.remove('active');
+            memoStatusTxt.textContent = "OFF";
+        }
+    }
+
+    function updateCompletedNumbers() {
+        const counts = Array(10).fill(0);
+        
+        cellsArray.forEach((cell, i) => {
+            const val = cell.querySelector('.cell-value').textContent;
+            if (val !== "" && !cell.classList.contains('error')) {
+                const num = parseInt(val);
+                if (num === solution[Math.floor(i/9)][i%9]) {
+                    counts[num]++;
+                }
+            }
+        });
+
+        for (let num = 1; num <= 9; num++) {
+            const btn = document.querySelector(`.num-btn[data-num="${num}"]`);
+            if (counts[num] === 9) {
+                if (btn) btn.classList.add('completed');
+                cellsArray.forEach((cell) => {
+                    const val = cell.querySelector('.cell-value').textContent;
+                    if (parseInt(val) === num && !cell.classList.contains('error')) {
+                        cell.classList.add('completed-num');
+                    }
+                });
+            } else {
+                if (btn) btn.classList.remove('completed');
+                cellsArray.forEach((cell) => {
+                    const val = cell.querySelector('.cell-value').textContent;
+                    if (parseInt(val) === num) {
+                        cell.classList.remove('completed-num');
+                    }
+                });
+            }
+        }
+    }
+
+    function startNewGame() {
+        generateSudoku();
+        mistakes = 0;
+        seconds = 0;
+        hintsUsed = 0; 
+        selectedCell = null;
+        mistakeEl.textContent = "0/3";
+        hintStatsEl.textContent = "0/3";
+        
+        if (timerInterval) clearInterval(timerInterval);
+        startTimer();
+
+        gridEl.innerHTML = "";
+        cellsArray = [];
+        memoData = Array.from({ length: 81 }, () => Array(10).fill(false));
+
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                const idx = r * 9 + c;
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.row = r;
+                cell.dataset.col = c;
+                
+                const valEl = document.createElement('div');
+                valEl.classList.add('cell-value');
+                
+                const memoGridEl = document.createElement('div');
+                memoGridEl.classList.add('memo-grid');
+                for(let m=1; m<=9; m++) {
+                    const digitEl = document.createElement('div');
+                    digitEl.classList.add('memo-digit');
+                    digitEl.id = `memo-${idx}-${m}`;
+                    memoGridEl.appendChild(digitEl);
+                }
+
+                cell.appendChild(valEl);
+                cell.appendChild(memoGridEl);
+
+                if (boardData[r][c] !== 0) {
+                    valEl.textContent = boardData[r][c];
+                    cell.classList.add('fixed');
+                }
+
+                if (c === 2 || c === 5) cell.classList.add('border-right-thick');
+                if (r === 2 || r === 5) cell.classList.add('border-bottom-thick');
+
+                cell.addEventListener('click', () => selectCell(r, c));
+                gridEl.appendChild(cell);
+                cellsArray.push(cell);
+            }
+        }
+        updateCompletedNumbers();
+    }
+
+    function selectCell(r, c) {
+        selectedCell = { r, c };
+        playSound('click'); // 격자 클릭 피드백음 추가
+        const targetIdx = r * 9 + c;
+        const clickedVal = cellsArray[targetIdx].querySelector('.cell-value').textContent;
+        
+        cellsArray.forEach(cell => {
+            cell.classList.remove('selected', 'cross-hl', 'match-hl');
+            const cellRow = parseInt(cell.dataset.row);
+            const cellCol = parseInt(cell.dataset.col);
+
+            if (cellRow === r || cellCol === c) {
+                cell.classList.add('cross-hl');
+            }
+            const currentVal = cell.querySelector('.cell-value').textContent;
+            if (clickedVal !== "" && currentVal === clickedVal) {
+                cell.classList.add('match-hl');
+            }
+        });
+
+        cellsArray[targetIdx].classList.add('selected');
+    }
+
+    function inputNumber(num) {
+        if (!selectedCell) return;
+        const idx = selectedCell.r * 9 + selectedCell.c;
+        const cell = cellsArray[idx];
+        if (cell.classList.contains('fixed')) return;
+
+        const valEl = cell.querySelector('.cell-value');
+
+        if (isMemoMode) {
+            if (valEl.textContent !== "") return;
+            playSound('click');
+            memoData[idx][num] = !memoData[idx][num];
+            const digitEl = document.getElementById(`memo-${idx}-${num}`);
+            digitEl.textContent = memoData[idx][num] ? num : "";
+            return;
+        }
+
+        if (solution[selectedCell.r][selectedCell.c] === num) {
+            playSound('correct'); // 정답 이펙트 사운드 재생
+            valEl.textContent = num;
+            cell.classList.remove('error');
+            
+            for(let m=1; m<=9; m++) {
+                document.getElementById(`memo-${idx}-${m}`).textContent = "";
+            }
+            
+            selectCell(selectedCell.r, selectedCell.c);
+            updateCompletedNumbers();
+            checkWin();
+        } else {
+            playSound('error'); // 오답 경고 사운드 재생
+            valEl.textContent = num;
+            cell.classList.add('error');
+            mistakes++;
+            mistakeEl.textContent = `${mistakes}/3`;
+            if (mistakes >= 3) {
+                alert("😈 실수 3회 초과! 새로운 랜덤 맵을 생성합니다.");
+                startNewGame();
+            }
+        }
+    }
+
+    function erase() {
+        if (!selectedCell) return;
+        const idx = selectedCell.r * 9 + selectedCell.c;
+        const cell = cellsArray[idx];
+        if (cell.classList.contains('fixed')) return;
+        
+        playSound('click');
+        cell.querySelector('.cell-value').textContent = "";
+        cell.classList.remove('error');
+        
+        for(let m=1; m<=9; m++) {
+            memoData[idx][m] = false;
+            document.getElementById(`memo-${idx}-${m}`).textContent = "";
+        }
+        
+        selectCell(selectedCell.r, selectedCell.c);
+        updateCompletedNumbers();
+    }
+
+    function useHint() {
+        if (!selectedCell) {
+            alert("힌트를 적용할 칸을 먼저 선택해 주세요!");
+            return;
+        }
+        const idx = selectedCell.r * 9 + selectedCell.c;
+        const cell = cellsArray[idx];
+        if (cell.classList.contains('fixed')) return;
+        
+        if (hintsUsed >= 3) {
+            alert("🔒 힌트는 게임당 최대 3번까지만 사용 가능합니다!");
+            return;
+        }
+        
+        playSound('hint'); // 힌트 고유 사운드 재생
+        const ans = solution[selectedCell.r][selectedCell.c];
+        cell.querySelector('.cell-value').textContent = ans;
+        cell.classList.remove('error');
+        cell.classList.add('fixed');
+        
+        for(let m=1; m<=9; m++) {
+            document.getElementById(`memo-${idx}-${m}`).textContent = "";
+        }
+        
+        hintsUsed++;
+        hintStatsEl.textContent = `${hintsUsed}/3`;
+        
+        selectCell(selectedCell.r, selectedCell.c);
+        updateCompletedNumbers();
+        checkWin();
+    }
+
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            seconds++;
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            timerEl.textContent = `${m}:${s}`;
+        }, 1000);
+    }
+
+    function checkWin() {
+        const win = cellsArray.every((cell, i) => parseInt(cell.querySelector('.cell-value').textContent) === solution[Math.floor(i/9)][i%9]);
+        if (win) {
+            clearInterval(timerInterval);
+            playSound('win'); // 최종 승리 팡파르 아르페지오 재생
+            alert("💫 대박! 미션 완전 클리어! 역시 최고의 멜랑이 팀원! 🎉");
+        }
+    }
+
+    startNewGame();
+</script>
 </body>
 </html>
