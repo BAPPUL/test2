@@ -5,13 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mellow TV Premium Sudoku</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Firebase SDK (v8) 추가 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
         :root {
             --bg-dark: #1a102f;
             --mellow-light-purple: #D6BCFA;
             --mellow-deep-purple: #6B46C1;
             --mellow-yellow: #FFD700;
-            
             --highlight-cross: #F3E8FF;
             --highlight-match: #FEFCBF;
             --selected-color: #B794F4;
@@ -115,13 +119,10 @@
         .cell.match-hl .cell-value { color: #1A202C; }
         .cell.selected { background-color: var(--selected-color) !important; }
         .cell.selected .cell-value { color: white !important; }
-        .cell.selected .memo-digit { color: #fff; opacity: 0.8; }
-        .cell.fixed .cell-value { color: var(--mellow-deep-purple); }
         .cell.fixed { background: #FAF5FF; }
-        .cell.error .cell-value { color: #E53E3E !important; }
+        .cell.fixed .cell-value { color: var(--mellow-deep-purple); }
         .cell.error { background-color: #FFF5F5; }
-
-        .cell.completed-num .cell-value { color: var(--success-green) !important; }
+        .cell.error .cell-value { color: #E53E3E !important; }
 
         .control-panel {
             width: 380px;
@@ -195,26 +196,51 @@
             transition: 0.15s;
         }
         .num-btn:hover { background: var(--mellow-deep-purple); color: white; }
-        
-        .num-btn.completed {
-            background: var(--success-green) !important;
-            color: white !important;
-            border-color: var(--success-green) !important;
+
+        .bottom-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
         }
 
-        .new-game-btn {
-            background: linear-gradient(135deg, #B794F4 0%, var(--mellow-deep-purple) 100%);
+        .new-game-btn, .rank-btn {
+            flex: 1;
             color: white;
             border: none;
             padding: 15px;
             border-radius: 10px;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 25px;
             box-shadow: 0 4px 14px rgba(107, 70, 193, 0.4);
         }
-        .new-game-btn:hover { opacity: 0.9; }
+        .new-game-btn { background: linear-gradient(135deg, #B794F4 0%, var(--mellow-deep-purple) 100%); }
+        .rank-btn { background: linear-gradient(135deg, #FFD700 0%, #D4AF37 100%); color: #1a102f; }
+        
+        /* 랭킹 모달 스타일 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: #251842;
+            border: 2px solid var(--mellow-light-purple);
+            padding: 30px;
+            border-radius: 15px;
+            width: 420px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(214, 188, 250, 0.3);
+        }
+        .modal h2 { margin-top: 0; color: var(--mellow-yellow); }
+        .rank-list { margin: 20px 0; text-align: left; max-height: 280px; overflow-y: auto; }
+        .rank-item { display: flex; justify-content: space-between; padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .rank-item:first-child { color: var(--mellow-yellow); font-weight: bold; }
+        .close-btn { background: var(--mellow-deep-purple); border: none; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -231,452 +257,286 @@
         
         <div class="stats-bar">
             <span>실수: <span id="mistake-count">0/3</span></span>
-            <span>힌트: <span id="hint-stats">0/3</span></span>
+            <span>힌트: <span id="hint-stats">3/3</span></span>
             <span>시간: <span id="timer">00:00</span></span>
         </div>
 
         <div class="action-buttons">
-            <div class="action-btn" onclick="erase()"><i class="fa-solid fa-eraser"></i>지우기</div>
+            <div class="action-btn" onclick="eraseCell()"><i class="fa-solid fa-eraser"></i>지우기</div>
             <div class="action-btn" id="memo-toggle-btn" onclick="toggleMemo()"><i class="fa-solid fa-pencil"></i>메모 <span id="memo-status">OFF</span></div>
             <div class="action-btn" onclick="useHint()"><i class="fa-solid fa-lightbulb"></i>힌트</div>
-            <div class="action-btn" onclick="startNewGame()"><i class="fa-solid fa-rotate"></i>초기화</div>
+            <div class="action-btn" onclick="resetBoard()"><i class="fa-solid fa-rotate"></i>초기화</div>
         </div>
 
         <div class="numpad">
-            <button class="num-btn" data-num="1" onclick="inputNumber(1)">1</button>
-            <button class="num-btn" data-num="2" onclick="inputNumber(2)">2</button>
-            <button class="num-btn" data-num="3" onclick="inputNumber(3)">3</button>
-            <button class="num-btn" data-num="4" onclick="inputNumber(4)">4</button>
-            <button class="num-btn" data-num="5" onclick="inputNumber(5)">5</button>
-            <button class="num-btn" data-num="6" onclick="inputNumber(6)">6</button>
-            <button class="num-btn" data-num="7" onclick="inputNumber(7)">7</button>
-            <button class="num-btn" data-num="8" onclick="inputNumber(8)">8</button>
-            <button class="num-btn" data-num="9" onclick="inputNumber(9)">9</button>
+            <button class="num-btn" onclick="inputNumber(1)">1</button>
+            <button class="num-btn" onclick="inputNumber(2)">2</button>
+            <button class="num-btn" onclick="inputNumber(3)">3</button>
+            <button class="num-btn" onclick="inputNumber(4)">4</button>
+            <button class="num-btn" onclick="inputNumber(5)">5</button>
+            <button class="num-btn" onclick="inputNumber(6)">6</button>
+            <button class="num-btn" onclick="inputNumber(7)">7</button>
+            <button class="num-btn" onclick="inputNumber(8)">8</button>
+            <button class="num-btn" onclick="inputNumber(9)">9</button>
         </div>
 
-        <button class="new-game-btn" onclick="startNewGame()">새 게임 시작하기</button>
+        <div class="bottom-buttons">
+            <button class="new-game-btn" onclick="startNewGame()">새 게임</button>
+            <button class="rank-btn" onclick="showLeaderboard()">🏆 랭킹 보기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 랭킹 모달 UI -->
+<div id="rankModal" class="modal">
+    <div class="modal-content">
+        <h2>🏆 실시간 명예의 전당</h2>
+        <div class="rank-list" id="rank-list-box"></div>
+        <button class="close-btn" onclick="closeModal()">닫기</button>
     </div>
 </div>
 
 <script>
-    const gridEl = document.getElementById('sudoku-grid');
-    const timerEl = document.getElementById('timer');
-    const mistakeEl = document.getElementById('mistake-count');
-    const memoBtn = document.getElementById('memo-toggle-btn');
-    const memoStatusTxt = document.getElementById('memo-status');
-    const hintStatsEl = document.getElementById('hint-stats');
-    
-    let selectedCell = null;
-    let mistakes = 0;
-    let seconds = 0;
-    let hintsUsed = 0; 
-    let timerInterval = null;
-    let isMemoMode = false;
-    let cellsArray = [];
-
-    let boardData = [];
+    // 스도쿠 기본 로직 및 데이터 정의
+    let board = [];
     let solution = [];
-    let memoData = [];
+    let selectedCell = null;
+    let memoMode = false;
+    let mistakes = 0;
+    let hintsLeft = 3;
+    let timerInterval = null;
+    let timeSeconds = 0;
 
-    // --- 신규 사운드 합성 오디오 엔진 컨텍스트 선언 ---
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // 예시용 고정 맵 데이터 (실제 게임용 구조)
+    const sampleBoard = [
+        [9,0,0, 5,0,8, 0,0,7],
+        [0,8,0, 3,0,2, 9,0,5],
+        [2,5,4, 0,0,0, 0,8,0],
+        [0,7,0, 6,8,0, 1,3,2],
+        [1,0,2, 0,0,4, 0,0,8],
+        [5,0,0, 2,1,9, 0,6,0],
+        [7,0,0, 9,0,6, 0,0,1],
+        [7,2,6, 0,0,1, 0,4,0],
+        [0,0,1, 4,7,0, 0,5,6]
+    ];
+    
+    const sampleSolution = [
+        [9,3,1, 5,2,8, 6,4,7],
+        [6,8,7, 3,4,2, 9,1,5],
+        [2,5,4, 1,9,7, 3,8,6],
+        [4,7,9, 6,8,5, 1,3,2],
+        [1,6,2, 7,3,4, 5,9,8],
+        [5,3,8, 2,1,9, 7,6,4],
+        [7,4,5, 9,5,6, 8,2,1],
+        [7,2,6, 8,5,1, 6,4,3],
+        [8,9,1, 4,7,3, 2,5,6]
+    ];
 
-    function playSound(type) {
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
-        const now = audioCtx.currentTime;
-
-        if (type === 'click') {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(450, now);
-            gain.gain.setValueAtTime(0.08, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(now);
-            osc.stop(now + 0.04);
-        } 
-        else if (type === 'correct') {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(587.33, now); // D5
-            osc.frequency.setValueAtTime(880.00, now + 0.07); // A5
-            gain.gain.setValueAtTime(0.12, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(now);
-            osc.stop(now + 0.25);
-        } 
-        else if (type === 'error') {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(140, now);
-            gain.gain.setValueAtTime(0.18, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(now);
-            osc.stop(now + 0.25);
-        } 
-        else if (type === 'hint') {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(400, now);
-            osc.frequency.exponentialRampToValueAtTime(1300, now + 0.2);
-            gain.gain.setValueAtTime(0.1, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(now);
-            osc.stop(now + 0.25);
-        } 
-        else if (type === 'win') {
-            const notes = [523.25, 659.25, 783.99, 1046.50]; // C - E - G - C 도미솔도 화음
-            notes.forEach((freq, i) => {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, now + i * 0.08);
-                gain.gain.setValueAtTime(0.1, now + i * 0.08);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.35);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start(now + i * 0.08);
-                osc.stop(now + i * 0.08 + 0.35);
-            });
-        }
-    }
-
-    function isValid(board, r, c, val) {
-        for (let i = 0; i < 9; i++) {
-            if (board[r][i] === val || board[i][c] === val) return false;
-        }
-        const boxRow = Math.floor(r / 3) * 3;
-        const boxCol = Math.floor(c / 3) * 3;
-        for (let i = 0; i < 3; i++) {
-            for (let j = 0; j < 3; j++) {
-                if (board[boxRow + i][boxCol + j] === val) return false;
-            }
-        }
-        return true;
-    }
-
-    function solveSudoku(board) {
+    function createGrid() {
+        const gridEl = document.getElementById('sudoku-grid');
+        gridEl.innerHTML = '';
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
-                if (board[r][c] === 0) {
-                    const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
-                    for (let num of nums) {
-                        if (isValid(board, r, c, num)) {
-                            board[r][c] = num;
-                            if (solveSudoku(board)) return true;
-                            board[r][c] = 0;
-                        }
-                    }
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    function generateSudoku() {
-        const baseGrid = Array.from({ length: 9 }, () => Array(9).fill(0));
-        solveSudoku(baseGrid);
-        solution = baseGrid.map(row => [...row]);
-        
-        boardData = baseGrid.map(row => [...row]);
-        let cellsToRemove = 40; 
-        while (cellsToRemove > 0) {
-            const r = Math.floor(Math.random() * 9);
-            const c = Math.floor(Math.random() * 9);
-            if (boardData[r][c] !== 0) {
-                boardData[r][c] = 0;
-                cellsToRemove--;
-            }
-        }
-    }
-
-    function toggleMemo() {
-        isMemoMode = !isMemoMode;
-        playSound('click');
-        if(isMemoMode) {
-            memoBtn.classList.add('active');
-            memoStatusTxt.textContent = "ON";
-        } else {
-            memoBtn.classList.remove('active');
-            memoStatusTxt.textContent = "OFF";
-        }
-    }
-
-    function updateCompletedNumbers() {
-        const counts = Array(10).fill(0);
-        
-        cellsArray.forEach((cell, i) => {
-            const val = cell.querySelector('.cell-value').textContent;
-            if (val !== "" && !cell.classList.contains('error')) {
-                const num = parseInt(val);
-                if (num === solution[Math.floor(i/9)][i%9]) {
-                    counts[num]++;
-                }
-            }
-        });
-
-        for (let num = 1; num <= 9; num++) {
-            const btn = document.querySelector(`.num-btn[data-num="${num}"]`);
-            if (counts[num] === 9) {
-                if (btn) btn.classList.add('completed');
-                cellsArray.forEach((cell) => {
-                    const val = cell.querySelector('.cell-value').textContent;
-                    if (parseInt(val) === num && !cell.classList.contains('error')) {
-                        cell.classList.add('completed-num');
-                    }
-                });
-            } else {
-                if (btn) btn.classList.remove('completed');
-                cellsArray.forEach((cell) => {
-                    const val = cell.querySelector('.cell-value').textContent;
-                    if (parseInt(val) === num) {
-                        cell.classList.remove('completed-num');
-                    }
-                });
-            }
-        }
-    }
-
-    function startNewGame() {
-        generateSudoku();
-        mistakes = 0;
-        seconds = 0;
-        hintsUsed = 0; 
-        selectedCell = null;
-        mistakeEl.textContent = "0/3";
-        hintStatsEl.textContent = "0/3";
-        
-        if (timerInterval) clearInterval(timerInterval);
-        startTimer();
-
-        gridEl.innerHTML = "";
-        cellsArray = [];
-        memoData = Array.from({ length: 81 }, () => Array(10).fill(false));
-
-        for (let r = 0; r < 9; r++) {
-            for (let c = 0; c < 9; c++) {
-                const idx = r * 9 + c;
                 const cell = document.createElement('div');
                 cell.classList.add('cell');
-                cell.dataset.row = r;
-                cell.dataset.col = c;
-                
-                const valEl = document.createElement('div');
-                valEl.classList.add('cell-value');
-                
-                const memoGridEl = document.createElement('div');
-                memoGridEl.classList.add('memo-grid');
-                for(let m=1; m<=9; m++) {
-                    const digitEl = document.createElement('div');
-                    digitEl.classList.add('memo-digit');
-                    digitEl.id = `memo-${idx}-${m}`;
-                    memoGridEl.appendChild(digitEl);
-                }
-
-                cell.appendChild(valEl);
-                cell.appendChild(memoGridEl);
-
-                if (boardData[r][c] !== 0) {
-                    valEl.textContent = boardData[r][c];
-                    cell.classList.add('fixed');
-                }
-
                 if (c === 2 || c === 5) cell.classList.add('border-right-thick');
                 if (r === 2 || r === 5) cell.classList.add('border-bottom-thick');
+                
+                const val = board[r][c];
+                const valEl = document.createElement('div');
+                valEl.classList.add('cell-value');
+                if (val !== 0) {
+                    valEl.innerText = val;
+                    cell.classList.add('fixed');
+                }
+                cell.appendChild(valEl);
 
-                cell.addEventListener('click', () => selectCell(r, c));
+                const memoGrid = document.createElement('div');
+                memoGrid.classList.add('memo-grid');
+                for (let i = 0; i < 9; i++) {
+                    const memoDigit = document.createElement('div');
+                    memoDigit.classList.add('memo-digit');
+                    memoGrid.appendChild(memoDigit);
+                }
+                cell.appendChild(memoGrid);
+
+                cell.onclick = () => selectCell(r, c, cell);
                 gridEl.appendChild(cell);
-                cellsArray.push(cell);
             }
         }
-        updateCompletedNumbers();
     }
 
-    function selectCell(r, c) {
-        selectedCell = { r, c };
-        playSound('click'); // 격자 클릭 피드백음 추가
-        const targetIdx = r * 9 + c;
-        const clickedVal = cellsArray[targetIdx].querySelector('.cell-value').textContent;
-        
-        cellsArray.forEach(cell => {
-            cell.classList.remove('selected', 'cross-hl', 'match-hl');
-            const cellRow = parseInt(cell.dataset.row);
-            const cellCol = parseInt(cell.dataset.col);
-
-            if (cellRow === r || cellCol === c) {
-                cell.classList.add('cross-hl');
-            }
-            const currentVal = cell.querySelector('.cell-value').textContent;
-            if (clickedVal !== "" && currentVal === clickedVal) {
-                cell.classList.add('match-hl');
-            }
-        });
-
-        cellsArray[targetIdx].classList.add('selected');
+    function selectCell(r, c, element) {
+        document.querySelectorAll('.cell').forEach(el => el.classList.remove('selected', 'cross-hl'));
+        selectedCell = { r, c, element };
+        element.classList.add('selected');
+        // 십자 하이라이트 등 추가 가능
     }
 
     function inputNumber(num) {
-        if (!selectedCell) return;
-        const idx = selectedCell.r * 9 + selectedCell.c;
-        const cell = cellsArray[idx];
-        if (cell.classList.contains('fixed')) return;
+        if (!selectedCell || selectedCell.element.classList.contains('fixed')) return;
+        const { r, c, element } = selectedCell;
 
-        const valEl = cell.querySelector('.cell-value');
-
-        if (isMemoMode) {
-            if (valEl.textContent !== "") return;
-            playSound('click');
-            memoData[idx][num] = !memoData[idx][num];
-            const digitEl = document.getElementById(`memo-${idx}-${num}`);
-            digitEl.textContent = memoData[idx][num] ? num : "";
-            return;
-        }
-
-        if (solution[selectedCell.r][selectedCell.c] === num) {
-            playSound('correct'); // 정답 이펙트 사운드 재생
-            valEl.textContent = num;
-            cell.classList.remove('error');
-            
-            for(let m=1; m<=9; m++) {
-                document.getElementById(`memo-${idx}-${m}`).textContent = "";
-            }
-            
-            selectCell(selectedCell.r, selectedCell.c);
-            updateCompletedNumbers();
-            checkWin();
+        if (memoMode) {
+            const memoDigits = element.querySelectorAll('.memo-digit');
+            const target = memoDigits[num - 1];
+            target.innerText = target.innerText ? '' : num;
         } else {
-            playSound('error'); // 오답 경고 사운드 재생
-            valEl.textContent = num;
-            cell.classList.add('error');
-            mistakes++;
-            mistakeEl.textContent = `${mistakes}/3`;
-            if (mistakes >= 3) {
-                alert("😈 실수 3회 초과! 새로운 랜덤 맵을 생성합니다.");
-                startNewGame();
+            const valEl = element.querySelector('.cell-value');
+            if (sampleSolution[r][c] === num) {
+                board[r][c] = num;
+                valEl.innerText = num;
+                element.classList.remove('error');
+                checkGameClear();
+            } else {
+                element.classList.add('error');
+                valEl.innerText = num;
+                mistakes++;
+                document.getElementById('mistake-count').innerText = `${mistakes}/3`;
+                if (mistakes >= 3) {
+                    alert("게임 오버! 실수를 3회 하였습니다.");
+                    startNewGame();
+                }
             }
         }
     }
 
-    function erase() {
-        if (!selectedCell) return;
-        const idx = selectedCell.r * 9 + selectedCell.c;
-        const cell = cellsArray[idx];
-        if (cell.classList.contains('fixed')) return;
-        
-        playSound('click');
-        cell.querySelector('.cell-value').textContent = "";
-        cell.classList.remove('error');
-        
-        for(let m=1; m<=9; m++) {
-            memoData[idx][m] = false;
-            document.getElementById(`memo-${idx}-${m}`).textContent = "";
-        }
-        
-        selectCell(selectedCell.r, selectedCell.c);
-        updateCompletedNumbers();
+    function eraseCell() {
+        if (!selectedCell || selectedCell.element.classList.contains('fixed')) return;
+        const { r, c, element } = selectedCell;
+        board[r][c] = 0;
+        element.querySelector('.cell-value').innerText = '';
+        element.querySelectorAll('.memo-digit').forEach(el => el.innerText = '');
+        element.classList.remove('error');
+    }
+
+    function toggleMemo() {
+        memoMode = !memoMode;
+        document.getElementById('memo-status').innerText = memoMode ? 'ON' : 'OFF';
+        document.getElementById('memo-toggle-btn').classList.toggle('active', memoMode);
     }
 
     function useHint() {
-        if (!selectedCell) {
-            alert("힌트를 적용할 칸을 먼저 선택해 주세요!");
-            return;
-        }
-        const idx = selectedCell.r * 9 + selectedCell.c;
-        const cell = cellsArray[idx];
-        if (cell.classList.contains('fixed')) return;
-        
-        if (hintsUsed >= 3) {
-            alert("🔒 힌트는 게임당 최대 3번까지만 사용 가능합니다!");
-            return;
-        }
-        
-        playSound('hint'); // 힌트 고유 사운드 재생
-        const ans = solution[selectedCell.r][selectedCell.c];
-        cell.querySelector('.cell-value').textContent = ans;
-        cell.classList.remove('error');
-        cell.classList.add('fixed');
-        
-        for(let m=1; m<=9; m++) {
-            document.getElementById(`memo-${idx}-${m}`).textContent = "";
-        }
-        
-        hintsUsed++;
-        hintStatsEl.textContent = `${hintsUsed}/3`;
-        
-        selectCell(selectedCell.r, selectedCell.c);
-        updateCompletedNumbers();
-        checkWin();
+        if (hintsLeft <= 0 || !selectedCell || selectedCell.element.classList.contains('fixed')) return;
+        const { r, c, element } = selectedCell;
+        const correctVal = sampleSolution[r][c];
+        board[r][c] = correctVal;
+        element.querySelector('.cell-value').innerText = correctVal;
+        element.classList.add('fixed');
+        element.classList.remove('error');
+        hintsLeft--;
+        document.getElementById('hint-stats').innerText = `${hintsLeft}/3`;
+        checkGameClear();
     }
 
     function startTimer() {
+        clearInterval(timerInterval);
+        timeSeconds = 0;
         timerInterval = setInterval(() => {
-            seconds++;
-            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-            const s = (seconds % 60).toString().padStart(2, '0');
-            timerEl.textContent = `${m}:${s}`;
+            timeSeconds++;
+            const min = String(Math.floor(timeSeconds / 60)).padStart(2, '0');
+            const sec = String(timeSeconds % 60).padStart(2, '0');
+            document.getElementById('timer').innerText = `${min}:${sec}`;
         }, 1000);
     }
 
-    function checkWin() {
-        const win = cellsArray.every((cell, i) => parseInt(cell.querySelector('.cell-value').textContent) === solution[Math.floor(i/9)][i%9]);
-        if (win) {
-            clearInterval(timerInterval);
-            playSound('win'); // 최종 승리 팡파르 아르페지오 재생
-            alert("💫 대박! 미션 완전 클리어! 역시 최고의 멜랑이 팀원! 🎉");
+    function checkGameClear() {
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (board[r][c] !== sampleSolution[r][c]) return;
+            }
         }
+        clearInterval(timerInterval);
+        setTimeout(() => {
+            const nickname = prompt("🎉 축하합니다! 스도쿠를 클리어했습니다! 랭킹에 등록할 닉네임을 입력하세요:");
+            if (nickname) {
+                saveGameResult(nickname, timeSeconds);
+            }
+        }, 500);
     }
 
-    startNewGame();
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    function startNewGame() {
+        board = JSON.parse(JSON.stringify(sampleBoard));
+        mistakes = 0;
+        hintsLeft = 3;
+        document.getElementById('mistake-count').innerText = "0/3";
+        document.getElementById('hint-stats').innerText = "3/3";
+        createGrid();
+        startTimer();
+    }
 
-<script>
-  // 2. ⚠️ 파이어베이스 웹 앱 만들고 나온 내 주소 복사해서 여기에 덮어쓰기!
-  const firebaseConfig = {
-    apiKey: "AIzaSy...",
-    authDomain: "내프로젝트.firebaseapp.com",
-    databaseURL: "https://내프로젝트-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "내프로젝트-id",
-    storageBucket: "내프로젝트.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:12345:web:abcde"
-  };
+    function resetBoard() {
+        startNewGame();
+    }
 
-  // 3. 파이어베이스 연결 시작
-  firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
+    // --- ⚠️ Firebase Realtime Database 연동 설정 ⚠️ ---
+    // 파이어베이스에서 복사한 본인의 핵심 설정값들을 여기에 그대로 덮어쓰세요!
+    const firebaseConfig = {
+        apiKey: "AIzaSyYourKeyHere...",
+        authDomain: "your-app.firebaseapp.com",
+        databaseURL: "https://your-app-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "your-app-id",
+        storageBucket: "your-app.appspot.com",
+        messagingSenderId: "123456789",
+        appId: "1:12345:web:abcde"
+    };
 
-  // 4. 게임 클리어했을 때 점수 저장하는 함수 (예시)
-  // 스도쿠 다 맞춘 순간에 이 함수를 실행시키면 돼!
-  function saveGameResult(nickname, clearTime) {
-    database.ref('ranking').push({
-      name: nickname,
-      time: clearTime, // 초 단위 (예: 90)
-      date: Date.now()
-    }).then(() => {
-      alert("🏆 랭킹 등록 완료!");
-    });
-  }
+    // 파이어베이스 초기화 실행
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // 1. 랭킹 데이터 저장 함수
+    function saveGameResult(nickname, clearTime) {
+        database.ref('ranking').push({
+            name: nickname,
+            time: clearTime,
+            date: Date.now()
+        }).then(() => {
+            alert("🏆 실시간 명예의 전당에 성공적으로 등록되었습니다!");
+            showLeaderboard();
+        }).catch(err => {
+            console.error("데이터 저장 에러:", err);
+            alert("랭킹 저장에 실패했습니다. Firebase 규칙(Rules)을 확인하세요.");
+        });
+    }
+
+    // 2. 랭킹 불러오기 함수 (상위 10명 소팅)
+    function showLeaderboard() {
+        const rankBox = document.getElementById('rank-list-box');
+        rankBox.innerHTML = "<div style='text-align:center; padding:20px;'>실시간 데이터 로딩 중...</div>";
+        document.getElementById('rankModal').style.display = 'flex';
+
+        database.ref('ranking').orderByChild('time').limitToFirst(10).once('value', (snapshot) => {
+            rankBox.innerHTML = "";
+            let rank = 1;
+            
+            if (!snapshot.exists()) {
+                rankBox.innerHTML = "<div style='text-align:center; padding:20px; color:#aaa;'>등록된 랭킹 기록이 없습니다. 첫 주인공이 되어보세요!</div>";
+                return;
+            }
+
+            snapshot.forEach((childSnapshot) => {
+                const data = childSnapshot.val();
+                const min = String(Math.floor(data.time / 60)).padStart(2, '0');
+                const sec = String(data.time % 60).padStart(2, '0');
+                
+                rankBox.innerHTML += `
+                    <div class="rank-item">
+                        <span><strong>${rank}등</strong>. ${data.name}</span>
+                        <span>⏱️ ${min}:${sec}</span>
+                    </div>
+                `;
+                rank++;
+            });
+        });
+    }
+
+    function closeModal() {
+        document.getElementById('rankModal').style.display = 'none';
+    }
+
+    // 페이지 로드 시 게임 자동 시작
+    window.onload = startNewGame;
 </script>
 </body>
 </html>
-
-
-
-
-
-
