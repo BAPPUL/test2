@@ -161,8 +161,40 @@ summary::-webkit-details-marker{display:none}
 .event.now{background:color-mix(in srgb,var(--now) 11%,transparent)}
 .event.now strong::after{content:"지금";display:inline-block;margin-left:8px;padding:1px 7px;border-radius:999px;background:var(--now);color:#fff;font-size:11px;font-weight:700;vertical-align:2px}
 .event.selected{background:var(--accent-soft);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 45%,transparent)}
-.event-entry{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:4px}
-.event-color{width:30px;height:30px;padding:3px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--muted);cursor:pointer}
+.event-entry{border-radius:12px;transition:background .18s}
+.event-entry.open{background:var(--panel-2);box-shadow:inset 0 0 0 1px var(--line)}
+.event-line{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px}
+.event-gear{display:grid;place-items:center;width:34px;height:34px;margin-right:4px;padding:0;border:0;border-radius:10px;background:none;color:var(--faint);cursor:pointer;transition:color .15s,background .15s}
+.event-gear svg{width:18px;height:18px}
+.event-gear:hover{color:var(--ink);background:var(--panel-2)}
+.event-gear[aria-expanded=true]{color:var(--accent);background:var(--accent-soft)}
+.event-gear:focus-visible,.ed-swatch:focus-visible,.ed-scope button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.event-editor{display:grid;gap:12px;padding:6px 12px 14px;font-size:calc(13px*var(--fs))}
+.ed-field{display:grid;gap:6px}
+.ed-field>span{font-size:12px;font-weight:650;color:var(--muted)}
+.ed-field small,.ed-note{font-size:12px;color:var(--faint);margin:0;line-height:1.45}
+.ed-field input,.ed-field select{width:100%;min-width:0;height:38px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font:inherit;font-size:14px}
+.ed-field input:focus,.ed-field select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+.ed-swatches{display:flex;flex-wrap:wrap;gap:7px}
+.ed-swatch{--c:#888;width:26px;height:26px;padding:0;border:0;border-radius:50%;background:var(--c);cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18);transition:transform .15s}
+.ed-swatch:hover{transform:scale(1.12)}
+.ed-swatch.cal{background:conic-gradient(var(--c) 0 50%,var(--panel) 50% 100%);box-shadow:inset 0 0 0 1.5px var(--c)}
+.ed-swatch[aria-checked=true]{box-shadow:0 0 0 2px var(--panel-2),0 0 0 4px var(--ink)}
+.ed-scope{display:grid;grid-template-columns:1fr 1fr;padding:3px;border-radius:11px;background:var(--panel)}
+.ed-scope button{height:32px;border:0;border-radius:8px;background:none;color:var(--muted);font:inherit;font-weight:600;cursor:pointer}
+.ed-scope button[aria-checked=true]{background:var(--accent);color:var(--accent-ink)}
+.ed-times{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ed-actions{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.ed-actions button{height:38px;padding:0 14px;border-radius:10px;font:inherit;font-weight:650;cursor:pointer}
+.ed-save{border:0;background:var(--accent);color:var(--accent-ink)}
+.ed-save:disabled{opacity:.45;cursor:default}
+.ed-delete{border:1px solid var(--line);background:none;color:var(--muted)}
+.ed-delete:hover{color:var(--now);border-color:var(--now)}
+.ed-delete.confirm{border-color:var(--now);background:var(--now);color:#fff}
+.ed-msg{margin:0;font-size:12px;color:var(--muted);min-height:1em}
+.ed-msg:empty{display:none}
+@media (max-width:640px){.event-gear{width:42px;height:42px}.ed-swatch{width:30px;height:30px}.ed-actions button{flex:1}}
+@media (prefers-reduced-motion:reduce){.event-gear,.ed-swatch{transition:none}}
 #tasks{margin-top:4px}
 .task{grid-template-columns:20px 1fr;align-items:start;cursor:pointer;row-gap:1px}
 .task input{margin-top:1px}
@@ -377,7 +409,7 @@ button:active:not(:disabled),.choice:active,.week-day:active{transform:scale(.97
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after,::backdrop{transition:none!important;animation:none!important}}
 .brand::before{background:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjOEM5N0Y1IiBkPSJNMjMxLjI5IDIzLjMxQTIzNCAyMzQgMCAwIDEgNDQ1LjE2IDM5My43NEwzNTEuNjUgMzE4LjAyQTExNCAxMTQgMCAwIDAgMjUwLjEyIDE0Mi4xNVoiLz48cGF0aCBmaWxsPSIjRkE2MzUyIiBkPSJNMzkyLjA5IDQ0Ni4zNkEyMzQgMjM0IDAgMCAxIDIxMy4xMSA0ODYuMDRMMjQxLjIwIDM2OS4wNEExMTQgMTE0IDAgMCAwIDMxNy4xOCAzNTIuMTlaIi8+PHBhdGggZmlsbD0iIzg3OTBCMiIgZD0iTTE0OS45OSA0NjQuNjFBMjM0IDIzNCAwIDAgMSAxNTcuMzMgNDMuODJMMjAyLjQxIDE1NS4zOEExMTQgMTE0IDAgMCAwIDE5OC45MyAzNTQuNjhaIi8+PC9zdmc+') center/contain no-repeat;mask:none;-webkit-mask:none;border-radius:0}button,summary,input,select,a,canvas,label{-webkit-tap-highlight-color:transparent}
-.task-draggable{touch-action:none;user-select:none;cursor:grab}.task-drag-ghost{position:fixed;z-index:1000;pointer-events:none;transform:translate(12px,-50%);padding:8px 12px;border-radius:10px;background:var(--accent);color:var(--accent-ink);max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.task-drop{outline:2px solid var(--accent);border-radius:50%}.task-drop-overlay{position:fixed;z-index:999;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px;background:#0d1020e6;pointer-events:none}.task-drop-overlay p{margin:0 0 10px;color:#eef0fb}.task-drop-overlay canvas{display:block;width:min(92vw,65vh,440px);aspect-ratio:1;background:var(--panel);border-radius:50%}</style>
+.task-draggable{touch-action:none;user-select:none;cursor:grab}.task-drag-ghost[data-time]:not([data-time=''])::after{content:attr(data-time);margin-left:8px;font-weight:700;opacity:.85}.task-drag-ghost{position:fixed;z-index:1000;pointer-events:none;transform:translate(12px,-50%);padding:8px 12px;border-radius:10px;background:var(--accent);color:var(--accent-ink);max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.task-drop{outline:2px solid var(--accent);border-radius:50%}.task-drop-overlay{position:fixed;z-index:999;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px;background:#0d1020e6;pointer-events:none}.task-drop-overlay p{margin:0 0 10px;color:#eef0fb}.task-drop-overlay canvas{display:block;width:min(92vw,65vh,440px);aspect-ratio:1;background:var(--panel);border-radius:50%}</style>
 <main>
 <header class="top">
   <div class="brand"><h1>오늘의 생활계획표</h1></div>
@@ -582,6 +614,15 @@ function luminance(hex){
   return [n>>16,n>>8&255,n&255].map(v=>{v/=255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4;})
     .reduce((s,v,i)=>s+v*[.2126,.7152,.0722][i],0);
 }
+/* 조각 테두리 색: 밝은 색은 어둡게, 어두운 색은 밝게 */
+function shade(hex){
+  const m=/^#?([\da-f]{6})$/i.exec(hex||''); if(!m)return 'rgba(0,0,0,.28)';
+  const n=parseInt(m[1],16), rgb=[n>>16,n>>8&255,n&255], light=luminance(hex)>.32;
+  const out=rgb.map(v=>Math.round(light?v*.6:v+(255-v)*.45));
+  return '#'+out.map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+/* 할 일을 시계에 끌어다 놓을 때 들어갈 자리 미리보기 */
+let dropPreview=null;
 function lowContrast(a,b){
   const x=luminance(a), y=luminance(b);
   if(x==null||y==null)return false;
@@ -684,6 +725,13 @@ function draw(target=$('wheel'),opt={}){
   const now=new Date(), nowMin=minute(now), today=dateKey(dayRef)===dateKey(now);
   const sel=mini?null:(drag?.e||selected);
   const ring=(inner,outer,a,b)=>{c.beginPath();c.arc(0,0,outer,a,b);c.arc(0,0,inner,b,a,true);c.closePath();};
+  // 틈의 폭이 안쪽·바깥쪽 모두 같은 조각 (쐐기 모양 틈 없이 경계가 딱 맞음)
+  const sector=(inner,outer,a,b,gap)=>{
+    const go=Math.asin(Math.min(1,gap/outer)), gi=Math.asin(Math.min(1,gap/inner));
+    let a1=a+go,b1=b-go,a2=a+gi,b2=b-gi;
+    if(b1<=a1){a1=b1=(a+b)/2;} if(b2<=a2){a2=b2=(a+b)/2;}
+    c.beginPath();c.arc(0,0,outer,a1,b1);c.arc(0,0,inner,b2,a2,true);c.closePath();
+  };
   const wedge=(inner,outer,a,b)=>{if(inner<1){c.beginPath();c.moveTo(0,0);c.arc(0,0,outer,a,b);c.closePath();}else ring(inner,outer,a,b);};
 
   // 빈 시간 트랙
@@ -729,22 +777,25 @@ function draw(target=$('wheel'),opt={}){
       let a2=a+(w0/2+1.5)/rm, b2=b-(w0/2+1.5)/rm;
       if(b2<=a2){a2=mid;b2=mid+.0001;}
       c.beginPath();c.arc(0,0,rm,a2,b2);c.lineCap='round';
-      if(edge){c.lineWidth=w+2;c.strokeStyle=col.muted;c.stroke();}
+      c.lineWidth=w+2.8;c.strokeStyle=edge?col.muted:shade(e.color);c.stroke();
       c.lineWidth=w;c.strokeStyle=e.color;c.stroke();
     }else if(style==='classic'){
       wedge(inner,outer,a,b);c.fillStyle=e.color;c.fill();
       if(isHover){c.fillStyle='rgba(255,255,255,.18)';c.fill();}
-      c.strokeStyle=edge?col.muted:col.hole;c.lineWidth=mini?4:1.6;c.lineJoin='miter';c.stroke();
+      if(!mini){c.save();c.clip();c.strokeStyle=edge?col.muted:shade(e.color);c.lineWidth=3;c.lineJoin='miter';c.stroke();c.restore();}
+      c.strokeStyle=col.hole;c.lineWidth=mini?4:1.4;c.lineJoin='miter';c.stroke();
       if(isSel){wedge(inner,outer,a,b);c.strokeStyle=col.ink;c.lineWidth=2.5;c.lineJoin='round';c.stroke();}
       if(!mini)drawSliceLabel(c,e,inner,outer,inner<1?outer*.62:(inner+outer)/2,a,b,px,FONT,1);
     }else{
       // 조각 사이 틈 + 둥근 모서리
-      const inset=3.2, ga=Math.min(inset/inner,span/4);
-      ring(inner+inset,outer-inset,a+ga,b-ga);
-      c.fillStyle=e.color;c.strokeStyle=e.color;c.lineWidth=3.5;c.lineJoin='round';c.fill();c.stroke();
-      if(isHover){c.fillStyle='rgba(255,255,255,.18)';c.fill();}
-      if(edge){c.strokeStyle=col.muted;c.lineWidth=1;c.stroke();}
-      if(isSel){const g2=Math.min(1.5/inner,span/4);ring(inner+1.5,outer-1.5,a+g2,b-g2);c.strokeStyle=col.ink;c.lineWidth=2.5;c.stroke();}
+      // 둥근 모서리는 같은 경로를 굵게 칠해서 만들고, 그 바깥에 테두리를 한 겹 더 그림
+      const inset=4, round=3, border=mini?0:isSel?2.4:1.3;
+      sector(inner+inset,outer-inset,a,b,inset);
+      c.lineJoin='round';
+      if(border){c.lineWidth=round+border*2;c.strokeStyle=isSel?col.ink:edge?col.muted:shade(e.color);c.stroke();}
+      c.fillStyle=e.color;c.strokeStyle=e.color;c.lineWidth=round;c.fill();c.stroke();
+      if(isHover){c.fillStyle='rgba(255,255,255,.18)';c.fill();c.lineWidth=round;c.strokeStyle='rgba(255,255,255,.18)';c.stroke();}
+
       if(!mini)drawSliceLabel(c,e,inner,outer,(inner+outer)/2,a,b,px,FONT,inset);
     }
     // 끌 수 있는 조각: 양 끝 손잡이
@@ -759,6 +810,16 @@ function draw(target=$('wheel'),opt={}){
     c.globalAlpha=1;
   }
   if(reveal<1)c.restore();
+  // 할 일 끌어다 놓기 미리보기: 반투명 조각 + 점선 테두리
+  const dp=!mini&&dropPreview&&(main||opt.dropTarget)?dropPreview:null;
+  if(dp){
+    const a=angle(dp.start), b=angle(dp.end);
+    c.save();
+    if(style==='classic')wedge(0,r,a,b);else sector(R0+2,r-2,a,b,1.5);
+    c.globalAlpha=.42;c.fillStyle=col.accent;c.fill();
+    c.globalAlpha=1;c.setLineDash([5,4]);c.lineWidth=2;c.strokeStyle=col.accent;c.lineJoin='round';c.stroke();
+    c.restore();
+  }
   // 심플형 선택 표시: 링 안팎에 호
   const hit=sel&&style==='simple'&&slices.find(s=>s.e===sel);
   if(hit){
@@ -771,15 +832,19 @@ function draw(target=$('wheel'),opt={}){
   // 바깥 눈금과 시각
   if(!mini)for(let h=0;h<24;h++){
     const a=angle(h*60), x=Math.cos(a), y=Math.sin(a), major=h%6===0;
-    const dotR=style==='simple'?r+12:r+9;
-    if(style!=='simple'||major||h%3===0){
-      c.beginPath();c.arc(x*dotR,y*dotR,major?2.6:1.6,0,TAU);c.fillStyle=major?col.muted:col.tick;c.fill();
-    }
-    const showLabel=style==='simple'?major:(major||h%2===0||k>0.95);
+    const dotR=style==='simple'?r+12:r+9, third=h%3===0;
+    // 눈금: 6시간 > 3시간 > 1시간 순으로 길고 굵게
+    const t0=style==='simple'?r+7:r+4, len=major?9:third?6:3.5;
+    c.beginPath();c.moveTo(x*t0,y*t0);c.lineTo(x*(t0+len),y*(t0+len));
+    c.lineWidth=major?2.6:third?1.8:1.2;c.lineCap='round';c.strokeStyle=major?col.ink:third?col.muted:col.tick;c.stroke();
+    // 30분 보조 눈금
+    if(style!=='simple'&&k>0.8){const ah=angle(h*60+30);c.beginPath();c.moveTo(Math.cos(ah)*t0,Math.sin(ah)*t0);c.lineTo(Math.cos(ah)*(t0+2),Math.sin(ah)*(t0+2));c.lineWidth=1;c.strokeStyle=col.tick;c.stroke();}
+    const showLabel=style==='simple'?third:(major||third||h%2===0||k>0.95);
     if(showLabel){
-      c.fillStyle=major?col.ink:col.faint;
-      c.font=`${major?700:500} ${px(major?14:11.5)}px ${FONT}`;c.textAlign='center';c.textBaseline='middle';
-      const lr=dotR+(major?18:15)+(prefs.timeFormat==='12'&&major&&h%12===6?6:0);
+      c.fillStyle=major?col.ink:third?col.ink:col.muted;
+      c.font=`${major?750:third?650:550} ${px(major?16:third?13.5:12.5)}px ${FONT}`;c.textAlign='center';c.textBaseline='middle';
+      const fs=px(major?16:third?13.5:12.5), horiz=Math.abs(x)>.7;
+      const lr=t0+len+5+(horiz?c.measureText(hourLabel(h)).width/2:fs*.55);
       c.fillText(hourLabel(h),x*lr,y*lr);
     }
   }
@@ -809,7 +874,11 @@ function draw(target=$('wheel'),opt={}){
   c.textAlign='center';c.textBaseline='middle';
   const innerW=(inR-(style==='simple'?34:12))*2;
   const current=today?list.find(e=>!e.allDay&&e.start<=nowMin&&nowMin<e.end):null;
-  if(sel){
+  if(dp){
+    c.fillStyle=col.accent;c.font=`650 ${px(11.5*S)}px ${FONT}`;c.fillText('여기에 추가',0,-px(30*S));
+    c.fillStyle=col.ink;c.font=`700 ${px(16*S)}px ${FONT}`;c.fillText(wrapLines(c,dp.title,innerW,1).lines[0],0,-px(6*S));
+    c.fillStyle=col.muted;c.font=`650 ${px(13*S)}px ${FONT}`;c.fillText(range(dp.start,dp.end),0,px(18*S));
+  }else if(sel){
     c.font=`700 ${px(16*S)}px ${FONT}`;
     const lh=px(16*S)*1.25, {lines}=wrapLines(c,sel.title,innerW,drag?2:3), top=-(lines.length-1)*lh/2;
     c.fillStyle=drag?col.now:col.accent;c.font=`650 ${px(11.5*S)}px ${FONT}`;c.fillText(drag?'시간 바꾸는 중':'선택한 일정',0,top-px(24*S));
@@ -900,7 +969,7 @@ function render(message,opt={}){
   $('status').textContent=message;
   $('connect').classList.toggle('on',Boolean(token));
   if(!events.includes(selected))selected=null;
-  $('list').replaceChildren();
+  const frag=document.createDocumentFragment();
   let i=0;
   for(const e of events){
     const row=document.createElement('button'), dot=document.createElement('span'), time=document.createElement('time'), title=document.createElement('strong');
@@ -914,40 +983,224 @@ function render(message,opt={}){
     title.textContent=e.title;
     row.onclick=()=>select(e);
     row.append(time,dot,title);
-    let node=row;
-    if(e.colorKey){
-      const entry=document.createElement('div'), picker=document.createElement('input');
-      entry.className='event-entry';picker.type='color';picker.className='event-color';
-      picker.value=e.color;
-      const label=e.title+(e.recurring?' · 이 일정부터 이후 반복 일정 색상':' · 일정 색상');
-      picker.title=label;picker.setAttribute('aria-label',label);
-      function applyColor(color){
-        const rules=(colorRules[e.colorKey]||[]).filter(rule=>rule.date<e.colorDate);
-        colorRules[e.colorKey]=[{date:e.colorDate,color},...rules];
-        try{localStorage.setItem(colorStorageKey,JSON.stringify(colorRules));}
-        catch{ $('status').textContent='이 브라우저에 색상을 저장하지 못했어요.'; }
-        for(const item of events)if(item.colorKey===e.colorKey)item.color=eventColor(item.colorKey,item.colorDate,item.defaultColor);
-        for(const button of $('list').querySelectorAll('.event')){
-          if(button._event.colorKey!==e.colorKey)continue;
-          paintDot(button.querySelector('.dot'),button._event.color);
-          button.parentElement.querySelector('input').value=button._event.color;
-        }
-        draw();
-        if(view==='week')drawWeek();
-      }
-      const reset=document.createElement('button');
-      reset.type='button';reset.className='event-color';reset.textContent='↺';
-      reset.title=e.recurring?'이 회차부터 색상 초기화':'색상 초기화';
-      reset.setAttribute('aria-label',e.title+' · '+reset.title);
-      reset.onclick=()=>applyColor(null);
-      picker.addEventListener('input',()=>applyColor(picker.value));
-      entry.append(row,picker,reset);node=entry;
-    }
-    if(opt.enter){node.classList.add('enter');node.style.setProperty('--i',Math.min(i++,14));}
-    $('list').append(node);
+    // 일정마다 설정 버튼 → 아래로 펼쳐지는 설정
+    const entry=document.createElement('div'), line=document.createElement('div'), gear=document.createElement('button');
+    entry.className='event-entry';line.className='event-line';entry._event=e;
+    gear.type='button';gear.className='event-gear';gear.setAttribute('aria-label',e.title+' 설정');gear.title='일정 설정';
+    gear.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>';
+    const key=editorKey(e), isOpen=openEditorKey===key;
+    gear.setAttribute('aria-expanded',String(isOpen));
+    line.append(row,gear);entry.append(line);
+    if(isOpen){entry.classList.add('open');entry.append(buildEditor(e));}
+    gear.onclick=()=>toggleEditor(entry,e);
+    if(opt.enter){entry.classList.add('enter');entry.style.setProperty('--i',Math.min(i++,14));}
+    frag.append(entry);
   }
+  $('list').replaceChildren(frag);
   markNow();
   draw();
+}
+function toggleEditor(entry,e){
+  const key=editorKey(e), opening=openEditorKey!==key;
+  // 다른 일정 설정은 닫음
+  for(const other of $('list').querySelectorAll('.event-entry.open')){
+    if(other===entry)continue;
+    other.classList.remove('open');other.querySelector('.event-editor')?.remove();
+    other.querySelector('.event-gear').setAttribute('aria-expanded','false');
+  }
+  openEditorKey=opening?key:null;
+  entry.querySelector('.event-gear').setAttribute('aria-expanded',String(opening));
+  if(opening){
+    const ed=buildEditor(e);entry.append(ed);entry.classList.add('open');
+    motion(ed,[{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'none'}],{duration:220});
+    if(selected!==e)select(e);
+    ed.querySelector('input,button')?.focus({preventScroll:true});
+  }else{
+    entry.classList.remove('open');entry.querySelector('.event-editor')?.remove();
+  }
+}
+
+/* ── 일정 설정 (하루 일정 목록의 ⚙): 색·제목·시간·캘린더·삭제 → Google 캘린더에 바로 저장 ── */
+const GOOGLE_EVENT_COLORS=[['1','라벤더','#7986CB'],['2','세이지','#33B679'],['3','포도','#8E24AA'],['4','플라밍고','#E67C73'],['5','바나나','#F6BF26'],
+  ['6','귤','#F4511E'],['7','공작','#039BE5'],['8','흑연','#616161'],['9','블루베리','#3F51B5'],['10','바질','#0B8043'],['11','토마토','#D50000']];
+const GOOGLE_COLOR_HEX=Object.fromEntries(GOOGLE_EVENT_COLORS.map(([id,,hex])=>[id,hex]));
+let writableCalendars=[], calendarInfo={}, openEditorKey=null;
+const editorKey=e=>e.id||('demo:'+e.title+':'+e.start);
+const CAL_API='https://www.googleapis.com/calendar/v3/calendars/';
+async function calendarRequest(method,path,body){
+  const response=await fetch(CAL_API+path,{method,headers:{Authorization:'Bearer '+token,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});
+  if(!response.ok&&!(method==='DELETE'&&response.status===410))throw Object.assign(new Error(),{status:response.status});
+  return response.status===204?null:response.json().catch(()=>null);
+}
+const eventPath=(calendarId,id)=>encodeURIComponent(calendarId)+'/events/'+encodeURIComponent(id);
+/** 같은 반복 일정의 다른 회차들 (이 화면에 보이는 것만) */
+const seriesOf=e=>e.recurringEventId?events.filter(x=>x.recurringEventId===e.recurringEventId&&x.calendarId===e.calendarId):[e];
+function rerender(){render($('status').textContent);}
+/** 낙관적 반영: 화면을 먼저 바꾸고, 저장 실패하면 원래대로 */
+async function applyEdit({change,revert,request,done,label}){
+  change();rerender();
+  if(!token||!request){toast([label+' 예시 일정이라 저장되지는 않아요.']);return true;}
+  try{await request();toast([label]);done?.();refresh({silent:true});return true;}
+  catch(error){
+    revert();rerender();
+    toast([[401,403].includes(error.status)?'Google로 다시 연결에서 일정 수정 권한을 허용해 주세요.':error.status===404||error.status===410?'이미 지워졌거나 바뀐 일정이에요. 새로 불러올게요.':'Google 캘린더에 저장하지 못했어요. 다시 시도해 주세요.']);
+    if(error.status===404||error.status===410)refresh({silent:true});
+    return false;
+  }
+}
+function buildEditor(e){
+  const box=document.createElement('div');box.className='event-editor';
+  const readonly=e.editable===false;
+  const recurring=Boolean(e.recurringEventId);
+  const field=(label,control,note)=>{const l=document.createElement(/^(INPUT|SELECT|TEXTAREA)$/.test(control.tagName)?'label':'div');l.className='ed-field';const s=document.createElement('span');s.textContent=label;l.append(s,control);if(note){const n=document.createElement('small');n.textContent=note;l.append(n);}return l;};
+  if(readonly){const p=document.createElement('p');p.className='ed-note';p.textContent='이 캘린더는 읽기 전용이라 여기서 바꿀 수 없어요.';box.append(p);return box;}
+
+  // 반복 일정: 적용 범위
+  let scope='this';
+  if(recurring){
+    const seg=document.createElement('div');seg.className='ed-scope';seg.setAttribute('role','radiogroup');seg.setAttribute('aria-label','적용 범위');
+    for(const [v,t] of [['this','이 일정만'],['all','반복 일정 전체']]){
+      const b=document.createElement('button');b.type='button';b.textContent=t;b.setAttribute('role','radio');b.setAttribute('aria-checked',String(v==='this'));
+      b.onclick=()=>{scope=v;for(const x of seg.children)x.setAttribute('aria-checked',String(x===b));calNote.textContent=v==='this'?'반복 일정은 캘린더를 옮기면 전체가 함께 옮겨져요.':'';};
+      seg.append(b);
+    }
+    box.append(seg);
+  }
+
+  // 색상 (Google 일정 색)
+  const swatches=document.createElement('div');swatches.className='ed-swatches';swatches.setAttribute('role','radiogroup');swatches.setAttribute('aria-label','일정 색');
+  const calColor=calendarInfo[e.calendarId]?.color||e.defaultColor||e.color;
+  for(const [id,name,hex] of [['','캘린더 색',calColor],...GOOGLE_EVENT_COLORS]){
+    const b=document.createElement('button');b.type='button';b.className='ed-swatch';b.style.setProperty('--c',hex);
+    b.title=name;b.setAttribute('aria-label',name);b.setAttribute('role','radio');
+    if(!id)b.classList.add('cal');
+    b.setAttribute('aria-checked',String((e.colorId||'')===id));
+    b.onclick=()=>{
+      if((e.colorId||'')===id)return;
+      const targets=scope==='all'?seriesOf(e):[e];
+      const before=targets.map(x=>[x,x.colorId,x.color,x.defaultColor]);
+      applyEdit({label:`${e.title} 색을 ${name}(으)로 바꿨어요.`,
+        change:()=>{for(const x of targets){x.colorId=id||undefined;x.defaultColor=id?hex:(calendarInfo[x.calendarId]?.color||x.defaultColor);x.color=x.defaultColor;}},
+        revert:()=>{for(const [x,c,col,d] of before){x.colorId=c;x.color=col;x.defaultColor=d;}},
+        done:()=>{for(const x of targets)clearLocalColor(x);},
+        request:e.id?()=>calendarRequest('PATCH',eventPath(e.calendarId,scope==='all'?e.recurringEventId:e.id),{colorId:id||null}):null});
+    };
+    swatches.append(b);
+  }
+  box.append(field('색상',swatches));
+
+  // 제목·시간
+  const title=document.createElement('input');title.value=e.title;title.maxLength=200;
+  box.append(field('제목',title));
+  const startIn=document.createElement('input'),endIn=document.createElement('input');
+  startIn.type=endIn.type='time';startIn.step=endIn.step=300;
+  const hhmm=n=>String(Math.floor(n/60)%24).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
+  if(!e.allDay){
+    startIn.value=hhmm(e.start);endIn.value=hhmm(e.end>=1440?1439:e.end);
+    const times=document.createElement('div');times.className='ed-times';
+    times.append(field('시작',startIn),field('끝',endIn));
+    box.append(times);
+    if(e.clipped){startIn.disabled=endIn.disabled=true;}
+  }
+  // 캘린더
+  const calSel=document.createElement('select');
+  for(const c of writableCalendars)calSel.append(new Option(c.title,c.id));
+  if(!writableCalendars.some(c=>c.id===e.calendarId))calSel.append(new Option(calendarInfo[e.calendarId]?.title||'현재 캘린더',e.calendarId||''));
+  calSel.value=e.calendarId||'';
+  const calNote=document.createElement('small');calNote.textContent=recurring?'반복 일정은 캘린더를 옮기면 전체가 함께 옮겨져요.':'';
+  const calField=field('캘린더',calSel);calField.append(calNote);
+  if(!token)calSel.disabled=true;
+  box.append(calField);
+  const msg=document.createElement('p');msg.className='ed-msg';msg.setAttribute('role','status');
+
+  // 버튼
+  const actions=document.createElement('div');actions.className='ed-actions';
+  const save=document.createElement('button');save.type='button';save.className='ed-save';save.textContent='변경 저장';
+  const del=document.createElement('button');del.type='button';del.className='ed-delete';del.textContent='일정 삭제';
+  actions.append(del,save);
+  box.append(msg,actions);
+
+  save.onclick=async()=>{
+    msg.textContent='';
+    const newTitle=title.value.trim()||e.title;
+    let ns=e.start,ne=e.end;
+    if(!e.allDay&&!e.clipped){
+      const toMin=v=>{const [h,m]=v.split(':').map(Number);return h*60+m;};
+      if(!startIn.value||!endIn.value){msg.textContent='시작과 끝 시간을 모두 입력해 주세요.';return;}
+      ns=toMin(startIn.value);ne=toMin(endIn.value);
+      if(ne===1439&&e.end>=1440&&endIn.value==='23:59')ne=1440;
+      if(ne<=ns){msg.textContent='끝 시간은 시작 시간보다 늦어야 해요.';return;}
+    }
+    const titleChanged=newTitle!==e.title, timeChanged=ns!==e.start||ne!==e.end, calChanged=calSel.value&&calSel.value!==e.calendarId;
+    if(!titleChanged&&!timeChanged&&!calChanged){msg.textContent='바뀐 내용이 없어요.';return;}
+    if(calChanged&&(titleChanged||timeChanged)){
+      msg.textContent='제목과 시간 변경을 먼저 저장한 뒤 캘린더를 옮겨 주세요.';
+      return;
+    }
+    save.disabled=true;
+    const orig={title:e.title,start:e.start,end:e.end,calendarId:e.calendarId,color:e.color,defaultColor:e.defaultColor};
+    const moveTargets=calChanged?(recurring?seriesOf(e):[e]):[];
+    const moveBefore=moveTargets.map(x=>[x,x.calendarId,x.color,x.defaultColor]);
+    const targetId=scope==='all'?e.recurringEventId:e.id;
+    const seriesTitle=scope==='all'&&titleChanged?seriesOf(e).map(x=>[x,x.title]):[];
+    const parts=[titleChanged&&'제목',timeChanged&&'시간',calChanged&&'캘린더'].filter(Boolean).join('·');
+    await applyEdit({label:`${newTitle} ${parts}을(를) 바꿨어요.`,
+      change:()=>{
+        e.title=newTitle;for(const [x] of seriesTitle)x.title=newTitle;
+        e.start=ns;e.end=ne;
+        if(calChanged){for(const x of moveTargets){x.calendarId=calSel.value;if(!x.colorId){x.defaultColor=calendarInfo[calSel.value]?.color||x.defaultColor;x.color=x.defaultColor;}}}
+        events.sort((a,b)=>a.start-b.start);
+      },
+      revert:()=>{Object.assign(e,orig);for(const [x,id,color,defaultColor] of moveBefore)Object.assign(x,{calendarId:id,color,defaultColor});for(const [x,t] of seriesTitle)x.title=t;events.sort((a,b)=>a.start-b.start);},
+      request:e.id?async()=>{
+        if(calChanged){
+          await calendarRequest('POST',eventPath(orig.calendarId,recurring?e.recurringEventId:e.id)+'/move?destination='+encodeURIComponent(calSel.value));
+          return;
+        }
+        const path=eventPath(orig.calendarId,targetId);
+        const patch={};
+        if(titleChanged)patch.summary=newTitle;
+        if(timeChanged&&scope==='all'){
+          const master=await calendarRequest('GET',path);
+          const shift=(point,delta)=>{
+            if(!point?.dateTime||!point.timeZone)throw new Error('Recurring event time zone missing');
+            const date=new Date(Date.parse(point.dateTime)+delta*60_000);
+            return {dateTime:date.toISOString(),timeZone:point.timeZone};
+          };
+          patch.start=shift(master?.start,ns-orig.start);
+          patch.end=shift(master?.end,ne-orig.end);
+          if(Date.parse(patch.end.dateTime)<=Date.parse(patch.start.dateTime))throw new Error('Invalid series duration');
+        }else if(timeChanged){
+          const at=n=>new Date(day.getFullYear(),day.getMonth(),day.getDate(),0,n).toISOString();
+          patch.start={dateTime:at(ns)};patch.end={dateTime:at(ne)};
+        }
+        await calendarRequest('PATCH',path,patch);
+      }:null});
+    save.disabled=false;
+  };
+  let confirmTimer;
+  del.onclick=async()=>{
+    if(!del.classList.contains('confirm')){
+      del.classList.add('confirm');
+      del.textContent=recurring&&scope==='all'?'반복 일정 전체를 삭제할까요? 한 번 더 누르기':'정말 삭제할까요? 한 번 더 누르기';
+      clearTimeout(confirmTimer);confirmTimer=setTimeout(()=>{del.classList.remove('confirm');del.textContent='일정 삭제';},4000);
+      return;
+    }
+    clearTimeout(confirmTimer);
+    const removed=scope==='all'?seriesOf(e):[e];
+    const snapshot=events.slice();
+    if(openEditorKey===editorKey(e))openEditorKey=null;
+    await applyEdit({label:`${e.title}${scope==='all'?' (반복 전체)':''}을(를) 삭제했어요.`,
+      change:()=>{events=events.filter(x=>!removed.includes(x));if(removed.includes(selected))selected=null;},
+      revert:()=>{events=snapshot;},
+      request:e.id?()=>calendarRequest('DELETE',eventPath(e.calendarId,scope==='all'?e.recurringEventId:e.id)):null});
+  };
+  return box;
+}
+function clearLocalColor(e){
+  if(!e.colorKey||!colorRules[e.colorKey])return;
+  delete colorRules[e.colorKey];
+  try{localStorage.setItem(colorStorageKey,JSON.stringify(colorRules));}catch{}
 }
 
 /* ── 알림 · 되돌리기 토스트 ── */
@@ -1035,11 +1288,12 @@ async function saveEventTime(e,orig){
   try{
     await patchEventTime(e,now.start,now.end);
     toast([strong(e.title),' 시간을 '+range(now.start,now.end)+'(으)로 바꿨어요.'],{timeout:7000,action:{label:'되돌리기',run:async()=>{
+      e.start=orig.start;e.end=orig.end;events.sort((a,b)=>a.start-b.start);render($('status').textContent);
       try{await patchEventTime(e,orig.start,orig.end);toast(['원래 시간으로 되돌렸어요.']);}
       catch(error){toast([saveError(error)]);}
-      refresh();
+      refresh({silent:true});
     }}});
-    refresh();
+    refresh({silent:true});
   }catch(error){
     undoLocal();
     toast([[401,403].includes(error.status)?'Google로 다시 연결에서 일정 수정 권한을 허용해 주세요.':'시간을 바꾸지 못했어요. 다시 시도해 주세요.']);
@@ -1263,14 +1517,14 @@ $('reset-settings').onclick=()=>{
 };
 applyPrefs();
 let taskRevision=0;
-async function refreshTasks(request){
+async function refreshTasks(request,opt={}){
   const status=document.getElementById('task-status'), list=document.getElementById('tasks');
-  const enter=taskEnterNext; taskEnterNext=false;
-  list.replaceChildren();
+  const enter=taskEnterNext&&!opt.silent; taskEnterNext=false;
   const completed=document.getElementById('completed-tasks');
-  completed.replaceChildren(); document.getElementById('completed-summary').textContent='완료한 할 일';
-  if(!token){status.textContent='Google 캘린더를 연결하면 할 일이 여기에 보여요.';return;}
-  status.textContent='할 일을 불러오는 중…';
+  if(!token){list.replaceChildren();completed.replaceChildren();document.getElementById('completed-summary').textContent='완료한 할 일';status.textContent='Google 캘린더를 연결하면 할 일이 여기에 보여요.';return;}
+  // 기존 목록은 새 목록이 준비될 때까지 그대로 둠 (깜빡임 없음)
+  const newList=document.createDocumentFragment(), newDone=document.createDocumentFragment();
+  if(!list.childElementCount)status.textContent='할 일을 불러오는 중…';
   const selectedDate=dateKey(day);
   async function getTasksPages(path, params){
     const entries=[];
@@ -1298,17 +1552,17 @@ async function refreshTasks(request){
     const allItems=results.flat();
     const items=allItems.filter(item=>item.status!=='completed');
     const done=allItems.filter(item=>item.status==='completed'&&(item.due?.slice(0,10)===selectedDate||!item.due));
-    document.getElementById('completed-summary').textContent='완료한 할 일 ('+done.length+')';
+    const doneSummary='완료한 할 일 ('+done.length+')';
     const groups=[['선택한 날짜',items.filter(item=>item.due?.slice(0,10)===selectedDate)],
                   ['날짜 미정',items.filter(item=>!item.due)]];
     let index=0;
     for(const [name, group] of [...groups,['',done]]){
       if(!group.length)continue;
       const heading=document.createElement('h3');
-      const destination=name?list:completed;
+      const destination=name?newList:newDone;
       if(name){
         const count=document.createElement('span');count.textContent=group.length;
-        heading.append(name,count);list.append(heading);
+        heading.append(name,count);newList.append(heading);
         if(enter){heading.classList.add('enter');heading.style.setProperty('--i',Math.min(index++,14));}
       }
       for(const item of group){
@@ -1335,7 +1589,7 @@ async function refreshTasks(request){
               body:JSON.stringify(wasComplete?{status:'needsAction',completed:null,hidden:false}:{status:'completed'})
             }),new Promise(r=>setTimeout(r,motionOK()?380:0))]);
             if(!response.ok)throw Object.assign(new Error(),{status:response.status});
-            refreshTasks(++taskRevision);
+            refreshTasks(++taskRevision,{silent:true});
           }catch(error){
             row.classList.remove('completing');
             check.checked=wasComplete;
@@ -1350,7 +1604,10 @@ async function refreshTasks(request){
         destination.append(row);
       }
     }
-    status.textContent=list.childElementCount?'':'남은 할 일이 없어요.';
+    const hasOpen=newList.childElementCount>0;
+    list.replaceChildren(newList);completed.replaceChildren(newDone);
+    document.getElementById('completed-summary').textContent=doneSummary;
+    status.textContent=hasOpen?'':'남은 할 일이 없어요.';
   }catch(error){
     if(request!==taskRevision)return;
     status.textContent=error.message==='403'||error.message==='401'
@@ -1395,7 +1652,7 @@ taskForm.onsubmit=async event=>{
     await createGoogleItem('https://tasks.googleapis.com/tasks/v1/lists/'+encodeURIComponent(data.get('list'))+'/tasks',item);
     taskForm.elements.namedItem('title').value='';
     taskFeedback.textContent='할 일을 추가했어요.';
-    refreshTasks(++taskRevision);
+    refreshTasks(++taskRevision,{silent:true});
   }catch(error){taskFeedback.textContent=saveError(error);}
   finally{button.disabled=!taskListSelect.options.length;}
 };
@@ -1444,7 +1701,15 @@ function bindTaskDrag(row,title){
     function position(pointer){
       ghost.style.left=pointer.clientX+'px';
       ghost.style.top=pointer.clientY+'px';
-      target.classList.toggle('task-drop',taskDropMinute(pointer,target)!==null);
+      const minute=taskDropMinute(pointer,target);
+      target.classList.toggle('task-drop',minute!==null);
+      ghost.classList.toggle('on-wheel',minute!==null);
+      const next=minute===null?null:{start:minute,end:Math.min(1440,minute+30),title:title.textContent};
+      if((next&&next.start)!==(dropPreview&&dropPreview.start)){
+        dropPreview=next;
+        ghost.dataset.time=next?range(next.start,next.end):'';
+        if(target===wheel)draw();else draw(target,{dropTarget:true});
+      }
     }
     function move(pointer){
       if(pointer.pointerId!==pointerId)return;
@@ -1463,6 +1728,7 @@ function bindTaskDrag(row,title){
       ghost?.remove();
       target.classList.remove('task-drop');
       overlay?.remove();
+      if(dropPreview){dropPreview=null;draw();}
     }
     function finish(pointer){
       if(pointer.pointerId!==pointerId)return;
@@ -1482,13 +1748,15 @@ async function saveTaskDrop(title,minute){
   const start=new Date(day.getFullYear(),day.getMonth(),day.getDate(),0,minute);
   const end=new Date(start.getTime()+30*60_000);
   taskDropSaving=true;
+  const temp={title,start:minute,end:Math.min(1440,minute+30),color:cssVar('--accent'),calendarId:calendar,editable:false,pending:true};
+  events.push(temp);events.sort((a,b)=>a.start-b.start);render($('status').textContent);
   try{
     await createGoogleItem('https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(calendar)+'/events',{
       summary:title,start:{dateTime:start.toISOString()},end:{dateTime:end.toISOString()}
     });
     toast([title+' · '+format(minute)+'부터 30분을 추가했어요.']);
-    refresh();
-  }catch(error){toast([saveError(error)]);}
+    refresh({silent:true});
+  }catch(error){events=events.filter(e=>e!==temp);render($('status').textContent);toast([saveError(error)]);}
   finally{taskDropSaving=false;}
 }
 let warnedEventKey;
@@ -1521,7 +1789,7 @@ eventForm.onsubmit=async event=>{
     eventForm.elements.namedItem('title').value='';
     eventForm.elements.namedItem('repeat').value='';
     eventFeedback.textContent=repeat?'반복 일정을 추가했어요.':'일정을 추가했어요.';
-    refresh();
+    refresh({silent:true});
   }catch(error){eventFeedback.textContent=saveError(error);}
   finally{button.disabled=!calendarSelect.options.length;}
 };
@@ -1557,42 +1825,54 @@ function mapEvents(items,start,end){
     if(e.start.date)return e.start.date<=startKey&&startKey<(e.end.date||e.start.date)||e.start.date===startKey;
     return new Date(e.start.dateTime)<end&&new Date(e.end.dateTime)>start;
   }).map((e,i)=>{
-    const title=e.summary||'제목 없는 일정',defaultColor=e.calendarColor||palette[i%palette.length];
+    const title=e.summary||'제목 없는 일정',defaultColor=GOOGLE_COLOR_HEX[e.colorId]||e.calendarColor||palette[i%palette.length];
     const recurring=Boolean(e.recurringEventId);
     const colorKey=JSON.stringify([e.calendarId,e.recurringEventId||e.id]);
     const originalStart=e.originalStartTime||e.start;
     const colorDate=recurring?(originalStart.date||dateKey(new Date(originalStart.dateTime))):'';
     const style={color:eventColor(colorKey,colorDate,defaultColor),colorKey,colorDate,defaultColor,recurring,
-                 id:e.id,calendarId:e.calendarId,editable:['owner','writer'].includes(e.calendarRole)};
+                 id:e.id,calendarId:e.calendarId,editable:['owner','writer'].includes(e.calendarRole),
+                 colorId:e.colorId,recurringEventId:e.recurringEventId};
     if(e.start.date)return {title,...style,allDay:true,start:-1};
     const from=new Date(e.start.dateTime),to=new Date(e.end.dateTime);
     return {title,...style,clipped:from<start||to>end,start:from<=start?0:minute(from),end:to>=end?1440:minute(to)};
   }).filter(e=>e.allDay||e.end>e.start).sort((a,b)=>a.start-b.start);
 }
-function finishRender(message){
+function finishRender(message,silent){
   if(isToday()&&token)todayCache={key:dateKey(day),events};
-  const enter=animateNext;animateNext=false;
+  const enter=!silent&&animateNext;if(!silent)animateNext=false;
   render(message,{enter});
   if(enter&&view==='day')playReveal();
   checkNotifications();
 }
-async function refresh(){
+/**
+ * 일정 다시 받기.
+ * silent: 화면을 비우지 않고 지금 보이는 일정을 그대로 둔 채 뒤에서 받아 바꿔치기 (수정·드래그·할 일 체크 뒤 깜빡임 없음)
+ */
+async function refresh(opt={}){
   const request=++revision;
-  selected=null;drag=null;hovered=null;
-  refreshTasks(++taskRevision);
-  if(view==='week')loadWeek(animateNext);
-  if(!token){setOptions(taskListSelect,[]);setOptions(calendarSelect,[]);events=demo.map(e=>({...e}));finishRender('예시 일정이에요. Google 캘린더를 연결하면 실제 일정으로 바뀌어요.');return;}
-  events=[];render('일정을 불러오는 중…');
+  const silent=Boolean(opt.silent&&token);
+  const keepSelected=silent?selected&&editorKey(selected):null;
+  if(!silent){selected=null;hovered=null;}
+  if(!drag||!silent)drag=null;
+  refreshTasks(++taskRevision,{silent});
+  if(view==='week')loadWeek(silent?false:animateNext);
+  if(!token){setOptions(taskListSelect,[]);setOptions(calendarSelect,[]);writableCalendars=[];calendarInfo={};events=demo.map(e=>({...e}));finishRender('예시 일정이에요. Google 캘린더를 연결하면 실제 일정으로 바뀌어요.');return;}
+  if(!silent){events=[];render('일정을 불러오는 중…');}
   const [start,end]=bounds(day);
   try{
     const {calendars,items,failed}=await fetchRange(start,end,()=>request===revision);
     if(request!==revision)return;
-    setOptions(calendarSelect,calendars.filter(calendar=>['owner','writer'].includes(calendar.accessRole))
+    calendarInfo=Object.fromEntries(calendars.map(c=>[c.id,{title:c.summaryOverride||c.summary,color:c.backgroundColor,role:c.accessRole}]));
+    writableCalendars=calendars.filter(calendar=>['owner','writer'].includes(calendar.accessRole))
       .sort((a,b)=>Number(Boolean(b.primary))-Number(Boolean(a.primary)))
-      .map(calendar=>({id:calendar.id,title:calendar.summaryOverride||calendar.summary})));
+      .map(calendar=>({id:calendar.id,title:calendar.summaryOverride||calendar.summary}));
+    setOptions(calendarSelect,writableCalendars);
+    if(drag)return;   // 끄는 중이면 덮어쓰지 않음
     events=mapEvents(items,start,end);
-    finishRender(failed.length?'일부 캘린더를 불러오지 못했어요.':events.length?'Google 캘린더 '+calendars.length+'개에서 불러왔어요.':'이날 등록된 일정이 없어요.');
-  }catch(error){if(request!==revision)return;if(error.status===401||error.status===403){token='';saveSession(null);render('Google로 다시 연결을 눌러 일정과 캘린더 목록 읽기 권한을 허용해 주세요.');return;}render('일정을 불러오지 못했어요. '+error.message);}
+    if(keepSelected)selected=events.find(e=>editorKey(e)===keepSelected)||null;
+    finishRender(failed.length?'일부 캘린더를 불러오지 못했어요.':events.length?'Google 캘린더 '+calendars.length+'개에서 불러왔어요.':'이날 등록된 일정이 없어요.',silent);
+  }catch(error){if(request!==revision)return;if(error.status===401||error.status===403){token='';saveSession(null);render('Google로 다시 연결을 눌러 일정과 캘린더 목록 읽기 권한을 허용해 주세요.');return;}if(silent){toast(['일정을 새로 불러오지 못했어요. 화면은 그대로 둘게요.']);return;}render('일정을 불러오지 못했어요. '+error.message);}
 }
 function loadAuth(){
   if(window.google?.accounts?.oauth2)return Promise.resolve();
