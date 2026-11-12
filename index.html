@@ -196,18 +196,18 @@ const demo = [[0,480,'수면'],[480,540,'아침 준비'],[540,600,'외출 및 �
 const sessionKey='planner.google.readonly';
 function restoreSession(){
   try{
-    const saved=JSON.parse(sessionStorage.getItem(sessionKey));
-    if(saved?.expiresAt>Date.now()+30000 && typeof saved.token==='string')return saved.token;
-    sessionStorage.removeItem(sessionKey);
+    const saved=JSON.parse(localStorage.getItem(sessionKey) ?? sessionStorage.getItem(sessionKey));
+    if(saved?.expiresAt>Date.now()+30000 && typeof saved.token==='string'){ localStorage.setItem(sessionKey,JSON.stringify(saved)); return saved.token; }
+    { localStorage.removeItem(sessionKey); sessionStorage.removeItem(sessionKey); }
   }catch{}
   return '';
 }
 function saveSession(result){
   try{
-    if(result)sessionStorage.setItem(sessionKey,JSON.stringify({
+    if(result)localStorage.setItem(sessionKey,JSON.stringify({
       token:result.access_token,expiresAt:Date.now()+Number(result.expires_in)*1000
     }));
-    else sessionStorage.removeItem(sessionKey);
+    else { localStorage.removeItem(sessionKey); sessionStorage.removeItem(sessionKey); }
   }catch{}
 }
 let day = new Date(), events = demo, token = restoreSession(), revision = 0, authScript;
