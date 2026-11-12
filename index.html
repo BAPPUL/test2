@@ -14,7 +14,7 @@
 <meta property="og:image:width" content="512">
 <meta property="og:image:height" content="512">
 <meta property="og:image:alt" content="오늘의 생활계획표 원형 시간표 로고">
-<meta name="theme-color" content="#a3afff">
+<meta name="theme-color" content="#0d1020">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjOEM5N0Y1IiBkPSJNMjMxLjI5IDIzLjMxQTIzNCAyMzQgMCAwIDEgNDQ1LjE2IDM5My43NEwzNTEuNjUgMzE4LjAyQTExNCAxMTQgMCAwIDAgMjUwLjEyIDE0Mi4xNVoiLz48cGF0aCBmaWxsPSIjRkE2MzUyIiBkPSJNMzkyLjA5IDQ0Ni4zNkEyMzQgMjM0IDAgMCAxIDIxMy4xMSA0ODYuMDRMMjQxLjIwIDM2OS4wNEExMTQgMTE0IDAgMCAwIDMxNy4xOCAzNTIuMTlaIi8+PHBhdGggZmlsbD0iIzg3OTBCMiIgZD0iTTE0OS45OSA0NjQuNjFBMjM0IDIzNCAwIDAgMSAxNTcuMzMgNDMuODJMMjAyLjQxIDE1NS4zOEExMTQgMTE0IDAgMCAwIDE5OC45MyAzNTQuNjhaIi8+PC9zdmc+">
 <script>
 /* 저장된 화면 설정을 그리기 전에 적용 (깜빡임 방지) */
@@ -1187,7 +1187,14 @@ function drawWeek(reveal=1){
 
 /* ── 설정 화면 ── */
 const prefDialog=$('preferences'), prefForm=$('preferences-form');
+const systemTheme=matchMedia('(prefers-color-scheme: dark)');
+function updateStatusBar(){
+  const dark=prefs.theme==='dark'||(prefs.theme==='system'&&systemTheme.matches);
+  document.querySelector('meta[name="theme-color"]').content=dark?'#0d1020':'#eef0f6';
+}
+systemTheme.addEventListener('change',updateStatusBar);
 function applyPrefs(){
+  updateStatusBar();
   const d=document.documentElement;
   d.dataset.theme=prefs.theme;d.dataset.time=prefs.timeFormat;d.dataset.size=prefs.textSize;
   d.dataset.dimPast=prefs.dimPast?'on':'off';d.dataset.motion=prefs.motion?'on':'off';
