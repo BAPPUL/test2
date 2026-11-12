@@ -439,7 +439,7 @@ function render(message){
       picker.value=e.color;
       const label=e.title+(e.recurring?' · 이 일정부터 이후 반복 일정 색상':' · 일정 색상');
       picker.title=label;picker.setAttribute('aria-label',label);
-      picker.addEventListener('change',()=>{
+      picker.addEventListener('input',()=>{
         const rules=(colorRules[e.colorKey]||[]).filter(rule=>rule.date<e.colorDate);
         colorRules[e.colorKey]=[{date:e.colorDate,color:picker.value},...rules];
         try{localStorage.setItem(colorStorageKey,JSON.stringify(colorRules));}
