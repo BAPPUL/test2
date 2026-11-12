@@ -1426,7 +1426,7 @@ function bindTaskDrag(row,title){
         overlay=document.createElement('div');
         overlay.className='task-drop-overlay';
         const hint=document.createElement('p');
-        hint.textContent='시계에 놓으면 10분 일정이 추가돼요';
+        hint.textContent='시계에 놓으면 30분 일정이 추가돼요';
         target=document.createElement('canvas');
         target.width=wheel.width;target.height=wheel.height;
         target.getContext('2d').drawImage(wheel,0,0);
@@ -1480,13 +1480,13 @@ async function saveTaskDrop(title,minute){
   const calendar=calendarSelect.value;
   if(!token||!calendar){toast(['일정을 저장할 수 있는 Google 캘린더가 없어요.']);return;}
   const start=new Date(day.getFullYear(),day.getMonth(),day.getDate(),0,minute);
-  const end=new Date(start.getTime()+10*60_000);
+  const end=new Date(start.getTime()+30*60_000);
   taskDropSaving=true;
   try{
     await createGoogleItem('https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(calendar)+'/events',{
       summary:title,start:{dateTime:start.toISOString()},end:{dateTime:end.toISOString()}
     });
-    toast([title+' · '+format(minute)+'부터 10분을 추가했어요.']);
+    toast([title+' · '+format(minute)+'부터 30분을 추가했어요.']);
     refresh();
   }catch(error){toast([saveError(error)]);}
   finally{taskDropSaving=false;}
