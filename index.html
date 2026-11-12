@@ -157,7 +157,7 @@ a{color:var(--accent)}
   .schedule{order:0}.todo{order:1}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
-#settings[hidden]{display:none} #settings h2{font-size:16px;margin:0 0 10px} #settings{margin:14px 0;padding:14px}.event-entry{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px}.event-color{width:30px;height:30px;padding:3px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);cursor:pointer}</style>
+#settings[hidden]{display:none} #settings h2{font-size:16px;margin:0 0 10px} #settings{margin:14px 0;padding:14px}.event-entry{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:4px}.event-color{width:30px;height:30px;padding:3px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);cursor:pointer}</style>
 <main>
 <header class="top">
   <div class="brand"><h1>오늘의 생활계획표</h1></div>
@@ -439,20 +439,26 @@ function render(message){
       picker.value=e.color;
       const label=e.title+(e.recurring?' · 이 일정부터 이후 반복 일정 색상':' · 일정 색상');
       picker.title=label;picker.setAttribute('aria-label',label);
-      picker.addEventListener('input',()=>{
+      function applyColor(color){
         const rules=(colorRules[e.colorKey]||[]).filter(rule=>rule.date<e.colorDate);
-        colorRules[e.colorKey]=[{date:e.colorDate,color:picker.value},...rules];
+        colorRules[e.colorKey]=[{date:e.colorDate,color},...rules];
         try{localStorage.setItem(colorStorageKey,JSON.stringify(colorRules));}
         catch{ $('status').textContent='이 브라우저에 색상을 저장하지 못했어요.'; }
         for(const item of events)if(item.colorKey===e.colorKey)item.color=eventColor(item.colorKey,item.colorDate,item.defaultColor);
         for(const button of $('list').querySelectorAll('.event')){
           if(button._event.colorKey!==e.colorKey)continue;
           button.querySelector('.dot').style.background=button._event.color;
-          button.nextElementSibling.value=button._event.color;
+          button.parentElement.querySelector('input').value=button._event.color;
         }
         draw();
-      });
-      entry.append(row,picker);$('list').append(entry);continue;
+      }
+      const reset=document.createElement('button');
+      reset.type='button';reset.className='event-color';reset.textContent='↺';
+      reset.title=e.recurring?'이 회차부터 색상 초기화':'색상 초기화';
+      reset.setAttribute('aria-label',e.title+' · '+reset.title);
+      reset.onclick=()=>applyColor(null);
+      picker.addEventListener('input',()=>applyColor(picker.value));
+      entry.append(row,picker,reset);$('list').append(entry);continue;
     }$('list').append(row);
   }
   markNow();
