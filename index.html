@@ -157,7 +157,7 @@ a{color:var(--accent)}
   .schedule{order:0}.todo{order:1}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
-#settings[hidden]{display:none} #settings h2{font-size:16px;margin:0 0 10px} #settings{margin:14px 0;padding:14px}</style>
+#settings[hidden]{display:none} #settings h2{font-size:16px;margin:0 0 10px} #settings{margin:14px 0;padding:14px}.event-entry{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px}.event-color{width:30px;height:30px;padding:3px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);cursor:pointer}</style>
 <main>
 <header class="top">
   <div class="brand"><h1>오늘의 생활계획표</h1></div>
@@ -408,6 +408,13 @@ function markNow(){
   }else if(events.some(e=>!e.allDay))next.textContent='오늘 남은 일정이 없어요';
 }
 function select(e){selected=selected===e?null:e;markNow();draw();}
+const colorStorageKey='planner.event-colors.v1';
+let colorRules={};
+try{colorRules=JSON.parse(localStorage.getItem(colorStorageKey))||{};}catch{}
+function eventColor(key,date,fallback){
+  const rule=(colorRules[key]||[]).find(rule=>rule.date<=date);
+  return /^#[0-9a-f]{6}$/i.test(rule?.color)?rule.color:fallback;
+}
 function render(message){
   $('date').textContent=new Intl.DateTimeFormat('ko-KR',{dateStyle:'full'}).format(day);
   $('status').textContent=message;
@@ -425,7 +432,28 @@ function render(message){
     }
     title.textContent=e.title;
     row.onclick=()=>select(e);
-    row.append(time,dot,title);$('list').append(row);
+    row.append(time,dot,title);
+    if(e.colorKey){
+      const entry=document.createElement('div'), picker=document.createElement('input');
+      entry.className='event-entry';picker.type='color';picker.className='event-color';
+      picker.value=e.color;
+      const label=e.title+(e.recurring?' · 이 일정부터 이후 반복 일정 색상':' · 일정 색상');
+      picker.title=label;picker.setAttribute('aria-label',label);
+      picker.addEventListener('change',()=>{
+        const rules=(colorRules[e.colorKey]||[]).filter(rule=>rule.date<e.colorDate);
+        colorRules[e.colorKey]=[{date:e.colorDate,color:picker.value},...rules];
+        try{localStorage.setItem(colorStorageKey,JSON.stringify(colorRules));}
+        catch{ $('status').textContent='이 브라우저에 색상을 저장하지 못했어요.'; }
+        for(const item of events)if(item.colorKey===e.colorKey)item.color=eventColor(item.colorKey,item.colorDate,item.defaultColor);
+        for(const button of $('list').querySelectorAll('.event')){
+          if(button._event.colorKey!==e.colorKey)continue;
+          button.querySelector('.dot').style.background=button._event.color;
+          button.nextElementSibling.value=button._event.color;
+        }
+        draw();
+      });
+      entry.append(row,picker);$('list').append(entry);continue;
+    }$('list').append(row);
   }
   markNow();
   draw();
@@ -623,17 +651,22 @@ async function refresh(){
       .map(calendar=>({id:calendar.id,title:calendar.summaryOverride||calendar.summary})));
     const results=await Promise.allSettled(calendars.map(async calendar=>{
       const entries=await readPages('calendars/'+encodeURIComponent(calendar.id)+'/events',new URLSearchParams(params));
-      return entries.map(entry=>({...entry,calendarColor:calendar.backgroundColor}));
+      return entries.map(entry=>({...entry,calendarColor:calendar.backgroundColor,calendarId:calendar.id}));
     }));
     if(request!==revision)return;
     const failed=results.filter(result=>result.status==='rejected');
     if(failed.length&&failed.length===results.length)throw failed[0].reason;
     const items=results.flatMap(result=>result.status==='fulfilled'?result.value:[]);
     events=items.filter(e=>e.start&&e.end).map((e,i)=>{
-      const title=e.summary||'제목 없는 일정',color=e.calendarColor||palette[i%palette.length];
-      if(e.start.date)return {title,color,allDay:true,start:-1};
+      const title=e.summary||'제목 없는 일정',defaultColor=e.calendarColor||palette[i%palette.length];
+      const recurring=Boolean(e.recurringEventId);
+      const colorKey=JSON.stringify([e.calendarId,e.recurringEventId||e.id]);
+      const originalStart=e.originalStartTime||e.start;
+      const colorDate=recurring?(originalStart.date||dateKey(new Date(originalStart.dateTime))):'';
+      const style={color:eventColor(colorKey,colorDate,defaultColor),colorKey,colorDate,defaultColor,recurring};
+      if(e.start.date)return {title,...style,allDay:true,start:-1};
       const from=new Date(e.start.dateTime),to=new Date(e.end.dateTime);
-      return {title,color,start:from<=start?0:minute(from),end:to>=end?1440:minute(to)};
+      return {title,...style,start:from<=start?0:minute(from),end:to>=end?1440:minute(to)};
     }).filter(e=>e.allDay||e.end>e.start).sort((a,b)=>a.start-b.start);
     render(failed.length?'일부 캘린더를 불러오지 못했어요.':events.length?'Google 캘린더 '+calendars.length+'개에서 불러왔어요.':'이날 등록된 일정이 없어요.');
   }catch(error){if(request!==revision)return;if(error.status===401||error.status===403){token='';saveSession(null);render('Google로 다시 연결을 눌러 일정과 캘린더 목록 읽기 권한을 허용해 주세요.');return;}render('일정을 불러오지 못했어요. '+error.message);}
