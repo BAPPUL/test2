@@ -1346,7 +1346,7 @@ async function refreshTasks(request){
           }
         };
         row.append(check,title,source);
-        if(!wasComplete)bindTaskDrag(title);
+        if(!wasComplete)bindTaskDrag(row,title);
         destination.append(row);
       }
     }
@@ -1405,20 +1405,21 @@ function taskDropMinute(pointer,target=wheel){
   const {d,m}=pointAt(pointer,target);
   return d>=35&&d<=245?Math.floor(m/5)*5:null;
 }
-function bindTaskDrag(title){
-  title.classList.add('task-draggable');
+function bindTaskDrag(row,title){
+  row.classList.add('task-draggable');
   title.addEventListener('contextmenu',event=>event.preventDefault());
-  title.addEventListener('click',event=>{
+  row.addEventListener('click',event=>{
+    if(event.target.closest('input'))return;
     event.preventDefault();
     event.stopPropagation();
   });
-  title.addEventListener('pointerdown',down=>{
-    if(!down.isPrimary||down.button!==0||taskDropSaving)return;
+  row.addEventListener('pointerdown',down=>{
+    if(!down.isPrimary||down.button!==0||taskDropSaving||down.target.closest('input'))return;
     const pointerId=down.pointerId;
     let ghost, overlay, target=wheel;
     let moved=false;
-    title.setPointerCapture(pointerId);
-    const timer=setTimeout(()=>{
+    row.setPointerCapture(pointerId);
+    function activate(){
       if(!title.isConnected)return;
       const rect=wheel.getBoundingClientRect();
       if(rect.top<0||rect.bottom>innerHeight||!rect.width){
@@ -1438,7 +1439,8 @@ function bindTaskDrag(title){
       ghost.textContent=title.textContent;
       document.body.append(ghost);
       position(down);
-    },350);
+    }
+    const timer=down.pointerType==='mouse'?undefined:setTimeout(activate,350);
     function position(pointer){
       ghost.style.left=pointer.clientX+'px';
       ghost.style.top=pointer.clientY+'px';
@@ -1447,7 +1449,11 @@ function bindTaskDrag(title){
     function move(pointer){
       if(pointer.pointerId!==pointerId)return;
       if(ghost){moved ||= Math.hypot(pointer.clientX-down.clientX,pointer.clientY-down.clientY)>10;position(pointer);return;}
-      if(Math.hypot(pointer.clientX-down.clientX,pointer.clientY-down.clientY)>10)cleanup();
+      if(Math.hypot(pointer.clientX-down.clientX,pointer.clientY-down.clientY)>10){
+        if(down.pointerType!=='mouse'){cleanup();return;}
+        activate();
+        if(ghost){moved=true;position(pointer);}
+      }
     }
     function cleanup(){
       clearTimeout(timer);
