@@ -377,7 +377,7 @@ button:active:not(:disabled),.choice:active,.week-day:active{transform:scale(.97
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after,::backdrop{transition:none!important;animation:none!important}}
 .brand::before{background:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjOEM5N0Y1IiBkPSJNMjMxLjI5IDIzLjMxQTIzNCAyMzQgMCAwIDEgNDQ1LjE2IDM5My43NEwzNTEuNjUgMzE4LjAyQTExNCAxMTQgMCAwIDAgMjUwLjEyIDE0Mi4xNVoiLz48cGF0aCBmaWxsPSIjRkE2MzUyIiBkPSJNMzkyLjA5IDQ0Ni4zNkEyMzQgMjM0IDAgMCAxIDIxMy4xMSA0ODYuMDRMMjQxLjIwIDM2OS4wNEExMTQgMTE0IDAgMCAwIDMxNy4xOCAzNTIuMTlaIi8+PHBhdGggZmlsbD0iIzg3OTBCMiIgZD0iTTE0OS45OSA0NjQuNjFBMjM0IDIzNCAwIDAgMSAxNTcuMzMgNDMuODJMMjAyLjQxIDE1NS4zOEExMTQgMTE0IDAgMCAwIDE5OC45MyAzNTQuNjhaIi8+PC9zdmc+') center/contain no-repeat;mask:none;-webkit-mask:none;border-radius:0}button,summary,input,select,a,canvas,label{-webkit-tap-highlight-color:transparent}
-.task-entry{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px}.task-place{font-size:12px;white-space:nowrap;border:1px solid var(--line);background:var(--panel-2);border-radius:9px;padding:7px;cursor:pointer} #task-duration[hidden]{display:none}</style>
+.task-draggable{touch-action:none;user-select:none;cursor:grab}.task-drag-ghost{position:fixed;z-index:1000;pointer-events:none;transform:translate(12px,-50%);padding:8px 12px;border-radius:10px;background:var(--accent);color:var(--accent-ink);max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#wheel.task-drop{outline:2px solid var(--accent);border-radius:50%}</style>
 <main>
 <header class="top">
   <div class="brand"><h1>오늘의 생활계획표</h1></div>
@@ -413,7 +413,7 @@ button:active:not(:disabled),.choice:active,.week-day:active{transform:scale(.97
 </section>
 <section class="panel side schedule">
   <div class="side-head"><h2>하루 일정</h2></div>
-  <details id="new-event-panel" class="add"><summary>일정 추가</summary><form id="new-event"><input name="title" aria-label="일정 이름" placeholder="일정 이름" required><select name="calendar" aria-label="저장할 캘린더" required></select><div class="times"><label>시작<input name="start" type="time" required></label><label>끝<input name="end" type="time" required></label></div><label id="task-duration" hidden>작업 시간<select name="duration"><option value="30">30분</option><option value="60">1시간</option><option value="0">직접 지정</option></select></label><label class="repeat">반복<select name="repeat" aria-label="반복"><option value="">반복 안 함</option><option value="DAILY">매일</option><option value="WEEKDAYS">평일마다 (월–금)</option><option value="WEEKLY">매주 같은 요일</option></select></label><button>일정 저장</button></form></details>
+  <details id="new-event-panel" class="add"><summary>일정 추가</summary><form id="new-event"><input name="title" aria-label="일정 이름" placeholder="일정 이름" required><select name="calendar" aria-label="저장할 캘린더" required></select><div class="times"><label>시작<input name="start" type="time" required></label><label>끝<input name="end" type="time" required></label></div><label class="repeat">반복<select name="repeat" aria-label="반복"><option value="">반복 안 함</option><option value="DAILY">매일</option><option value="WEEKDAYS">평일마다 (월–금)</option><option value="WEEKLY">매주 같은 요일</option></select></label><button>일정 저장</button></form></details>
   <p id="event-feedback" role="status"></p>
   <p id="status" role="status"></p><div id="list"></div>
 </section>
@@ -1346,13 +1346,8 @@ async function refreshTasks(request){
           }
         };
         row.append(check,title,source);
-        if(wasComplete){destination.append(row);continue;}
-        const entry=document.createElement('div'), place=document.createElement('button');
-        entry.className='task-entry';
-        place.type='button';place.className='task-place';place.textContent='시간 잡기';
-        place.setAttribute('aria-label',title.textContent+' 시간 잡기');
-        place.onclick=()=>placeTask(title.textContent);
-        entry.append(row,place);destination.append(entry);
+        if(!wasComplete)bindTaskDrag(title);
+        destination.append(row);
       }
     }
     status.textContent=list.childElementCount?'':'남은 할 일이 없어요.';
@@ -1405,33 +1400,79 @@ taskForm.onsubmit=async event=>{
   finally{button.disabled=!taskListSelect.options.length;}
 };
 const RRULES={DAILY:'RRULE:FREQ=DAILY',WEEKDAYS:'RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR',WEEKLY:'RRULE:FREQ=WEEKLY'};
-const durationPanel=document.getElementById('task-duration');
-const durationField=eventForm.elements.namedItem('duration');
-const startField=eventForm.elements.namedItem('start');
-const endField=eventForm.elements.namedItem('end');
-function updateTaskEnd(){
-  if(durationPanel.hidden||!startField.value||!Number(durationField.value))return;
-  const [hour,minute]=startField.value.split(':').map(Number);
-  const end=hour*60+minute+Number(durationField.value);
-  endField.value=end<1440?String(Math.floor(end/60)).padStart(2,'0')+':'+String(end%60).padStart(2,'0'):'';
-  if(end>=1440)eventFeedback.textContent='자정 전에 끝나는 시간을 골라 주세요.';
+let taskDropSaving=false;
+function taskDropMinute(pointer){
+  const {d,m}=pointAt(pointer);
+  return d>=35&&d<=245?Math.floor(m/5)*5:null;
 }
-function placeTask(title){
-  const panel=document.getElementById('new-event-panel');
-  panel.open=true;
-  durationPanel.hidden=false;
-  durationField.value='30';
-  eventForm.elements.namedItem('title').value=title;
-  eventForm.elements.namedItem('repeat').value='';
-  startField.value='';endField.value='';
-  warnedEventKey=undefined;
-  eventFeedback.textContent=calendarSelect.options.length?'':'일정을 저장할 수 있는 캘린더가 없어요.';
-  panel.scrollIntoView({block:'nearest'});
-  startField.focus({preventScroll:true});
+function bindTaskDrag(title){
+  title.classList.add('task-draggable');
+  title.addEventListener('contextmenu',event=>event.preventDefault());
+  title.addEventListener('click',event=>{
+    event.preventDefault();
+    event.stopPropagation();
+  });
+  title.addEventListener('pointerdown',down=>{
+    if(!down.isPrimary||down.button!==0||taskDropSaving)return;
+    const pointerId=down.pointerId;
+    let ghost;
+    const timer=setTimeout(()=>{
+      if(!title.isConnected)return;
+      if(wheel.getBoundingClientRect().bottom<0||wheel.getBoundingClientRect().top>=innerHeight){
+        wheel.scrollIntoView({block:'center'});
+      }
+      ghost=document.createElement('div');
+      ghost.className='task-drag-ghost';
+      ghost.setAttribute('aria-hidden','true');
+      ghost.textContent=title.textContent;
+      document.body.append(ghost);
+      position(down);
+    },350);
+    function position(pointer){
+      ghost.style.left=pointer.clientX+'px';
+      ghost.style.top=pointer.clientY+'px';
+      wheel.classList.toggle('task-drop',taskDropMinute(pointer)!==null);
+    }
+    function move(pointer){
+      if(pointer.pointerId!==pointerId)return;
+      if(ghost){position(pointer);return;}
+      if(Math.hypot(pointer.clientX-down.clientX,pointer.clientY-down.clientY)>10)cleanup();
+    }
+    function cleanup(){
+      clearTimeout(timer);
+      window.removeEventListener('pointermove',move);
+      window.removeEventListener('pointerup',finish);
+      window.removeEventListener('pointercancel',finish);
+      ghost?.remove();
+      wheel.classList.remove('task-drop');
+    }
+    function finish(pointer){
+      if(pointer.pointerId!==pointerId)return;
+      const minute=ghost&&pointer.type==='pointerup'?taskDropMinute(pointer):null;
+      cleanup();
+      if(minute!==null)saveTaskDrop(title.textContent,minute);
+    }
+    window.addEventListener('pointermove',move);
+    window.addEventListener('pointerup',finish);
+    window.addEventListener('pointercancel',finish);
+  });
 }
-startField.addEventListener('input',updateTaskEnd);
-durationField.addEventListener('change',updateTaskEnd);
-endField.addEventListener('input',()=>{if(!durationPanel.hidden)durationField.value='0';});
+async function saveTaskDrop(title,minute){
+  if(taskDropSaving)return;
+  const calendar=calendarSelect.value;
+  if(!token||!calendar){toast(['일정을 저장할 수 있는 Google 캘린더가 없어요.']);return;}
+  const start=new Date(day.getFullYear(),day.getMonth(),day.getDate(),0,minute);
+  const end=new Date(start.getTime()+10*60_000);
+  taskDropSaving=true;
+  try{
+    await createGoogleItem('https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(calendar)+'/events',{
+      summary:title,start:{dateTime:start.toISOString()},end:{dateTime:end.toISOString()}
+    });
+    toast([title+' · '+format(minute)+'부터 10분을 추가했어요.']);
+    refresh();
+  }catch(error){toast([saveError(error)]);}
+  finally{taskDropSaving=false;}
+}
 let warnedEventKey;
 eventForm.addEventListener('input',()=>{warnedEventKey=undefined;eventFeedback.textContent='';});
 eventForm.onsubmit=async event=>{
@@ -1459,7 +1500,6 @@ eventForm.onsubmit=async event=>{
     :{summary:title,start:{dateTime:start.toISOString()},end:{dateTime:end.toISOString()}};
   try{
     await createGoogleItem('https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(data.get('calendar'))+'/events',body);
-    durationPanel.hidden=true;
     eventForm.elements.namedItem('title').value='';
     eventForm.elements.namedItem('repeat').value='';
     eventFeedback.textContent=repeat?'반복 일정을 추가했어요.':'일정을 추가했어요.';
