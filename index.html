@@ -196,7 +196,14 @@ summary::-webkit-details-marker{display:none}
 @media (max-width:640px){.event-gear{width:42px;height:42px}.ed-swatch{width:30px;height:30px}.ed-actions button{flex:1}}
 @media (prefers-reduced-motion:reduce){.event-gear,.ed-swatch{transition:none}}
 #tasks{margin-top:4px}
-.task{grid-template-columns:20px 1fr;align-items:start;cursor:pointer;row-gap:1px}
+.task{grid-template-columns:20px 1fr auto;align-items:start;cursor:pointer;row-gap:1px}
+.task-delete{grid-column:3;grid-row:1/span 2;align-self:center;display:grid;place-items:center;width:36px;height:36px;margin:-4px -4px -4px 0;padding:0;border:0;border-radius:10px;background:none;color:var(--faint);cursor:pointer;transition:color .15s,background .15s}
+.task-delete svg{width:20px;height:20px}
+.task-delete:hover{color:var(--now);background:color-mix(in srgb,var(--now) 12%,transparent)}
+.task-delete:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.task.removing{pointer-events:none;animation:taskOut .26s ease-in forwards}
+@keyframes taskOut{to{opacity:0;transform:translateX(24px)}}
+@media(max-width:720px){.task-delete{width:42px;height:42px}}
 .task input{margin-top:1px}
 .task small{grid-column:2;font-size:calc(12px*var(--fs));color:var(--faint)}
 .task:hover{background:var(--panel-2)}
@@ -409,7 +416,7 @@ button:active:not(:disabled),.choice:active,.week-day:active{transform:scale(.97
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after,::backdrop{transition:none!important;animation:none!important}}
 .brand::before{background:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjOEM5N0Y1IiBkPSJNMjMxLjI5IDIzLjMxQTIzNCAyMzQgMCAwIDEgNDQ1LjE2IDM5My43NEwzNTEuNjUgMzE4LjAyQTExNCAxMTQgMCAwIDAgMjUwLjEyIDE0Mi4xNVoiLz48cGF0aCBmaWxsPSIjRkE2MzUyIiBkPSJNMzkyLjA5IDQ0Ni4zNkEyMzQgMjM0IDAgMCAxIDIxMy4xMSA0ODYuMDRMMjQxLjIwIDM2OS4wNEExMTQgMTE0IDAgMCAwIDMxNy4xOCAzNTIuMTlaIi8+PHBhdGggZmlsbD0iIzg3OTBCMiIgZD0iTTE0OS45OSA0NjQuNjFBMjM0IDIzNCAwIDAgMSAxNTcuMzMgNDMuODJMMjAyLjQxIDE1NS4zOEExMTQgMTE0IDAgMCAwIDE5OC45MyAzNTQuNjhaIi8+PC9zdmc+') center/contain no-repeat;mask:none;-webkit-mask:none;border-radius:0}button,summary,input,select,a,canvas,label{-webkit-tap-highlight-color:transparent}
-.task-draggable{touch-action:none;user-select:none;cursor:grab}.task-drag-ghost[data-time]:not([data-time=''])::after{content:attr(data-time);margin-left:8px;font-weight:700;opacity:.85}.task-drag-ghost{position:fixed;z-index:1000;pointer-events:none;transform:translate(12px,-50%);padding:8px 12px;border-radius:10px;background:var(--accent);color:var(--accent-ink);max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.task-drop{outline:2px solid var(--accent);border-radius:50%}.task-drop-overlay{position:fixed;z-index:999;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px;background:#0d1020e6;pointer-events:none}.task-drop-overlay p{margin:0 0 10px;color:#eef0fb}.task-drop-overlay canvas{display:block;width:min(92vw,65vh,440px);aspect-ratio:1;background:var(--panel);border-radius:50%}</style>
+.task-draggable{touch-action:none;user-select:none;cursor:grab}.task-drag-ghost[data-time]:not([data-time=''])::after{content:attr(data-time);margin-left:8px;font-weight:700;opacity:.85}.task-drag-ghost{position:fixed;z-index:1000;pointer-events:none;transform:translate(12px,-50%);padding:8px 12px;border-radius:10px;background:var(--accent);color:var(--accent-ink);max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.task-drop{outline:2px solid var(--accent);border-radius:50%}.task-drop-overlay{position:fixed;z-index:999;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px;background:#0d1020e6;pointer-events:none}.task-drop-overlay p{margin:0 0 10px;color:#eef0fb}.task-drop-overlay canvas{display:block;width:min(92vw,65vh,440px);aspect-ratio:1;background:var(--panel);border-radius:50%}#week-filter{margin-bottom:10px} #week-calendars{display:grid;gap:8px;padding:10px} #week-calendars label{display:flex;align-items:center;gap:8px} #week-calendars i{width:10px;height:10px;border-radius:50%;flex:none} #week-filter-dot{color:var(--accent)} #week-filter-reset{margin:0 10px 10px}</style>
 <main>
 <header class="top">
   <div class="brand"><h1>오늘의 생활계획표</h1></div>
@@ -439,7 +446,7 @@ button:active:not(:disabled),.choice:active,.week-day:active{transform:scale(.97
     <p id="wheel-hint">조각이나 일정을 누르면 가운데에 전체 제목이 보여요</p>
   </div>
   <div id="week-view" role="tabpanel" aria-labelledby="view-week" hidden>
-    <div id="week"></div>
+    <details id="week-filter" class="add"><summary>주간 캘린더 <span id="week-filter-dot" hidden>●</span></summary><div id="week-calendars"></div><button id="week-filter-reset" type="button">모두 표시</button></details><div id="week"></div><p id="week-filter-status" role="status"></p>
     <p id="week-status" role="status"></p>
   </div>
 </section>
@@ -1388,15 +1395,41 @@ function setView(next){
   if(view==='week')loadWeek(true);
   else requestAnimationFrame(playReveal);
 }
+const weekFilterKey='planner.week-hidden.v1';
+let weekCalendars=[], weekHidden=new Set();
+try{weekHidden=new Set(JSON.parse(localStorage.getItem(weekFilterKey)||'[]'));}catch{}
+function saveWeekFilter(){
+  try{localStorage.setItem(weekFilterKey,JSON.stringify([...weekHidden]));}catch{}
+  renderWeek(false);
+}
+function renderWeekFilter(){
+  const list=$('week-calendars');
+  $('week-filter').hidden=!weekCalendars.length;
+  list.replaceChildren();
+  for(const calendar of weekCalendars){
+    const label=document.createElement('label'), check=document.createElement('input'), dot=document.createElement('i');
+    check.type='checkbox';check.checked=!weekHidden.has(calendar.id);
+    dot.style.background=calendar.backgroundColor||'var(--accent)';
+    check.onchange=()=>{if(check.checked)weekHidden.delete(calendar.id);else weekHidden.add(calendar.id);saveWeekFilter();list.querySelectorAll('input')[weekCalendars.indexOf(calendar)]?.focus();};
+    label.append(check,dot,calendar.summaryOverride||calendar.summary||'캘린더');list.append(label);
+  }
+  const count=weekCalendars.filter(calendar=>weekHidden.has(calendar.id)).length;
+  $('week-filter-dot').hidden=!count;
+  $('week-filter-status').textContent=count?'캘린더 '+count+'개는 주간에서 빼고 보여요.':'';
+}
+$('week-filter-reset').onclick=()=>{weekHidden.clear();saveWeekFilter();};
+document.addEventListener('click',event=>{const filter=$('week-filter');if(filter.open&&!filter.contains(event.target))filter.open=false;});
+document.addEventListener('keydown',event=>{const filter=$('week-filter');if(event.key==='Escape'&&filter.open){filter.open=false;filter.querySelector('summary').focus();}});
 async function loadWeek(enter){
   const request=++weekRevision, ws=weekStart(day);
   const days=[...Array(7)].map((_,i)=>new Date(ws.getFullYear(),ws.getMonth(),ws.getDate()+i));
-  if(!token){weekData=days.map(date=>({date,events:demo}));$('week-status').textContent='예시 일정이에요.';renderWeek(enter);return;}
+  if(!token){weekCalendars=[];weekData=days.map(date=>({date,events:demo}));$('week-status').textContent='예시 일정이에요.';renderWeek(enter);return;}
   if(!weekData||dateKey(weekData[0].date)!==dateKey(ws)){weekData=days.map(date=>({date,events:[]}));renderWeek(false);}
   $('week-status').textContent='한 주 일정을 불러오는 중…';
   try{
-    const {items,failed}=await fetchRange(days[0],new Date(ws.getFullYear(),ws.getMonth(),ws.getDate()+7),()=>request===weekRevision);
+    const {items,failed,calendars}=await fetchRange(days[0],new Date(ws.getFullYear(),ws.getMonth(),ws.getDate()+7),()=>request===weekRevision);
     if(request!==weekRevision)return;
+    weekCalendars=calendars;
     weekData=days.map(date=>{const [s,e]=bounds(date);return {date,events:mapEvents(items,s,e)};});
     $('week-status').textContent=failed.length?'일부 캘린더를 불러오지 못했어요.':'';
     renderWeek(enter);
@@ -1406,10 +1439,12 @@ async function loadWeek(enter){
   }
 }
 function renderWeek(enter){
+  renderWeekFilter();
   const box=$('week');box.replaceChildren();
   const fmt=new Intl.DateTimeFormat('ko-KR',{weekday:'short'}), todayKey=dateKey(new Date());
   let total=0, busiest=null;
-  weekData.forEach(({date,events:list},i)=>{
+  weekData.forEach(({date,events},i)=>{
+    const list=events.filter(event=>!weekHidden.has(event.calendarId));
     const timed=list.filter(e=>!e.allDay), mins=timed.reduce((s,e)=>s+(e.end-e.start),0);
     total+=mins; if(!busiest||mins>busiest.mins)busiest={date,mins};
     const btn=document.createElement('button'), cv=document.createElement('canvas'), b=document.createElement('b'), small=document.createElement('small');
@@ -1517,6 +1552,66 @@ $('reset-settings').onclick=()=>{
 };
 applyPrefs();
 let taskRevision=0;
+/* ── 할 일 삭제 (Google Tasks에서 삭제 → Google 캘린더에서도 사라짐) ── */
+const deletingTasks=new Set();
+const TRASH_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16M9.5 6.5V4.8c0-.7.6-1.3 1.3-1.3h2.4c.7 0 1.3.6 1.3 1.3v1.7M6 6.5l.9 12.6c.1 1 .9 1.9 2 1.9h6.2c1.1 0 1.9-.9 2-1.9L18 6.5M10 10.5v6.5M14 10.5v6.5"/></svg>';
+function tasksUrl(listId,taskId){
+  return 'https://tasks.googleapis.com/tasks/v1/lists/'+encodeURIComponent(listId)+'/tasks'+(taskId?'/'+encodeURIComponent(taskId):'');
+}
+function taskDeleteButton(item,row,label){
+  const b=document.createElement('button');
+  b.type='button';b.className='task-delete';b.innerHTML=TRASH_SVG;
+  b.title='할 일 삭제';b.setAttribute('aria-label',label+' 삭제');
+  b.addEventListener('pointerdown',ev=>ev.stopPropagation());
+  b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();deleteTask(item,row,label);};
+  return b;
+}
+function updateTaskCounts(){
+  const done=$('completed-tasks').querySelectorAll('.task:not(.removing)').length;
+  $('completed-summary').textContent=done?'완료한 할 일 ('+done+')':'완료한 할 일';
+  for(const h of $('tasks').querySelectorAll('h3')){
+    let n=0, el=h.nextElementSibling;
+    while(el&&el.tagName!=='H3'){if(el.classList.contains('task')&&!el.classList.contains('removing'))n++;el=el.nextElementSibling;}
+    const count=h.querySelector('span'); if(count)count.textContent=n;
+    h.hidden=!n;
+  }
+  const open=$('tasks').querySelectorAll('.task:not(.removing)').length;
+  $('task-status').textContent=open?'':'남은 할 일이 없어요.';
+}
+async function deleteTask(item,row,label){
+  if(deletingTasks.has(item.id))return;
+  deletingTasks.add(item.id);
+  // 화면에서 먼저 빼고, 실패하면 다시 보여줌
+  row.classList.add('removing');
+  const hide=()=>{row.hidden=true;updateTaskCounts();};
+  const hideTimer=motionOK()?setTimeout(hide,260):null;
+  if(hideTimer===null)hide();
+  const restore=()=>{clearTimeout(hideTimer);deletingTasks.delete(item.id);row.hidden=false;row.classList.remove('removing');updateTaskCounts();};
+  try{
+    if(!token)throw Object.assign(new Error(),{status:401});
+    const response=await fetch(tasksUrl(item.listId,item.id),{method:'DELETE',headers:{Authorization:'Bearer '+token}});
+    if(!response.ok&&response.status!==404&&response.status!==410)throw Object.assign(new Error(),{status:response.status});
+    toast([strong(label),' 할 일을 삭제했어요.'],{timeout:7000,action:{label:'되돌리기',run:()=>restoreTask(item,label)}});
+    refreshTasks(++taskRevision,{silent:true});
+  }catch(error){
+    restore();
+    toast([[401,403].includes(error.status)?'Google로 다시 연결을 눌러 할 일 수정 권한을 허용해 주세요.':'할 일을 삭제하지 못했어요. 다시 시도해 주세요.']);
+  }
+}
+/* 되돌리기: 같은 목록에 같은 내용으로 다시 만듦 */
+async function restoreTask(item,label){
+  const body={title:item.title||''};
+  if(item.notes)body.notes=item.notes;
+  if(item.due)body.due=item.due;
+  if(item.status==='completed'){body.status='completed';if(item.completed)body.completed=item.completed;}
+  try{
+    const response=await fetch(tasksUrl(item.listId),{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!response.ok)throw new Error(String(response.status));
+    deletingTasks.delete(item.id);
+    toast([strong(label),' 할 일을 되살렸어요.']);
+  }catch{toast(['할 일을 되살리지 못했어요.']);}
+  refreshTasks(++taskRevision,{silent:true});
+}
 async function refreshTasks(request,opt={}){
   const status=document.getElementById('task-status'), list=document.getElementById('tasks');
   const enter=taskEnterNext&&!opt.silent; taskEnterNext=false;
@@ -1552,11 +1647,12 @@ async function refreshTasks(request,opt={}){
     const allItems=results.flat();
     const items=allItems.filter(item=>item.status!=='completed');
     const done=allItems.filter(item=>item.status==='completed'&&(item.due?.slice(0,10)===selectedDate||!item.due));
-    const doneSummary='완료한 할 일 ('+done.length+')';
+    const doneSummary='완료한 할 일 ('+done.filter(item=>!deletingTasks.has(item.id)).length+')';
     const groups=[['선택한 날짜',items.filter(item=>item.due?.slice(0,10)===selectedDate)],
                   ['날짜 미정',items.filter(item=>!item.due)]];
     let index=0;
-    for(const [name, group] of [...groups,['',done]]){
+    for(const [name, group0] of [...groups,['',done]]){
+      const group=group0.filter(item=>!deletingTasks.has(item.id));
       if(!group.length)continue;
       const heading=document.createElement('h3');
       const destination=name?newList:newDone;
@@ -1599,7 +1695,7 @@ async function refreshTasks(request,opt={}){
               :'완료 상태를 저장하지 못했어요. 다시 시도해 주세요.';
           }
         };
-        row.append(check,title,source);
+        row.append(check,title,source,taskDeleteButton(item,row,title.textContent));
         if(!wasComplete)bindTaskDrag(row,title);
         destination.append(row);
       }
@@ -1666,12 +1762,12 @@ function bindTaskDrag(row,title){
   row.classList.add('task-draggable');
   title.addEventListener('contextmenu',event=>event.preventDefault());
   row.addEventListener('click',event=>{
-    if(event.target.closest('input'))return;
+    if(event.target.closest('input,button'))return;
     event.preventDefault();
     event.stopPropagation();
   });
   row.addEventListener('pointerdown',down=>{
-    if(!down.isPrimary||down.button!==0||taskDropSaving||down.target.closest('input'))return;
+    if(!down.isPrimary||down.button!==0||taskDropSaving||down.target.closest('input,button'))return;
     const pointerId=down.pointerId;
     let ghost, overlay, target=wheel;
     let moved=false;
@@ -1913,6 +2009,33 @@ function goToday(){
   motion($('date'),[{opacity:0,transform:'scale(.94)'},{opacity:1,transform:'none'}],{duration:260});
 }
 $('prev').onclick=()=>shift(-1);$('next').onclick=()=>shift(1);
+/* 휴대폰: 오른쪽→왼쪽으로 밀면 다음 날, 왼쪽→오른쪽은 전날 */
+(()=>{
+  let sw=null;
+  const touchUI=()=>matchMedia('(pointer:coarse)').matches||innerWidth<=1120;
+  const scrollsX=el=>{for(;el&&el!==document.body;el=el.parentElement){const o=getComputedStyle(el).overflowX;if((o==='auto'||o==='scroll')&&el.scrollWidth>el.clientWidth+1)return true;}return false;};
+  document.addEventListener('touchstart',ev=>{
+    sw=null;
+    if(ev.touches.length!==1||!touchUI()||document.querySelector('dialog[open]'))return;
+    const t=ev.touches[0], target=ev.target;
+    if(target.closest?.('input,select,textarea,[contenteditable=true],.toast,.event-editor')||scrollsX(target))return;
+    sw={x:t.clientX,y:t.clientY,time:performance.now(),blocked:false};
+  },{passive:true});
+  document.addEventListener('touchmove',ev=>{
+    if(!sw)return;
+    if(ev.touches.length>1||drag||document.querySelector('.task-drag-ghost'))sw.blocked=true;
+  },{passive:true});
+  document.addEventListener('touchend',ev=>{
+    const s=sw;sw=null;
+    if(!s||s.blocked||drag||document.querySelector('.task-drag-ghost'))return;
+    const t=ev.changedTouches[0], dx=t.clientX-s.x, dy=t.clientY-s.y;
+    if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.6||performance.now()-s.time>800)return;
+    const n=dx<0?1:-1;
+    shift(n);
+    motion(document.querySelector('.layout'),[{opacity:.35,transform:`translateX(${n>0?28:-28}px)`},{opacity:1,transform:'none'}],{duration:280,easing:'cubic-bezier(.2,.8,.2,1)'});
+  },{passive:true});
+  document.addEventListener('touchcancel',()=>{sw=null;},{passive:true});
+})();
 $('today').onclick=goToday;
 $('view-day').onclick=()=>setView('day');$('view-week').onclick=()=>setView('week');
 let wheelAcc=0, wheelLast=0, wheelLock=0;
