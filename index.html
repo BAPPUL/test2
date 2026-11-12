@@ -377,7 +377,7 @@ button:active:not(:disabled),.choice:active,.week-day:active{transform:scale(.97
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after,::backdrop{transition:none!important;animation:none!important}}
 .brand::before{background:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjOEM5N0Y1IiBkPSJNMjMxLjI5IDIzLjMxQTIzNCAyMzQgMCAwIDEgNDQ1LjE2IDM5My43NEwzNTEuNjUgMzE4LjAyQTExNCAxMTQgMCAwIDAgMjUwLjEyIDE0Mi4xNVoiLz48cGF0aCBmaWxsPSIjRkE2MzUyIiBkPSJNMzkyLjA5IDQ0Ni4zNkEyMzQgMjM0IDAgMCAxIDIxMy4xMSA0ODYuMDRMMjQxLjIwIDM2OS4wNEExMTQgMTE0IDAgMCAwIDMxNy4xOCAzNTIuMTlaIi8+PHBhdGggZmlsbD0iIzg3OTBCMiIgZD0iTTE0OS45OSA0NjQuNjFBMjM0IDIzNCAwIDAgMSAxNTcuMzMgNDMuODJMMjAyLjQxIDE1NS4zOEExMTQgMTE0IDAgMCAwIDE5OC45MyAzNTQuNjhaIi8+PC9zdmc+') center/contain no-repeat;mask:none;-webkit-mask:none;border-radius:0}button,summary,input,select,a,canvas,label{-webkit-tap-highlight-color:transparent}
-.task-draggable{touch-action:none;user-select:none;cursor:grab}.task-drag-ghost{position:fixed;z-index:1000;pointer-events:none;transform:translate(12px,-50%);padding:8px 12px;border-radius:10px;background:var(--accent);color:var(--accent-ink);max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#wheel.task-drop{outline:2px solid var(--accent);border-radius:50%}</style>
+.task-draggable{touch-action:none;user-select:none;cursor:grab}.task-drag-ghost{position:fixed;z-index:1000;pointer-events:none;transform:translate(12px,-50%);padding:8px 12px;border-radius:10px;background:var(--accent);color:var(--accent-ink);max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.task-drop{outline:2px solid var(--accent);border-radius:50%}.task-drop-overlay{position:fixed;z-index:999;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px;background:#0d1020e6;pointer-events:none}.task-drop-overlay p{margin:0 0 10px;color:#eef0fb}.task-drop-overlay canvas{display:block;width:min(92vw,65vh,440px);aspect-ratio:1;background:var(--panel);border-radius:50%}</style>
 <main>
 <header class="top">
   <div class="brand"><h1>오늘의 생활계획표</h1></div>
@@ -975,8 +975,8 @@ const strong = text => {const b=document.createElement('b');b.textContent=text;r
 
 /* ── 원형 시간표: 누르기 · 끌어서 시간 바꾸기 ── */
 const wheel=$('wheel');
-function pointAt(ev){
-  const rect=wheel.getBoundingClientRect(), s=540/rect.width;
+function pointAt(ev,target=wheel){
+  const rect=target.getBoundingClientRect(), s=540/rect.width;
   const x=(ev.clientX-rect.left)*s-270, y=(ev.clientY-rect.top)*s-270;
   return {d:Math.hypot(x,y),m:((Math.atan2(y,x)+Math.PI/2)%TAU+TAU)%TAU/TAU*1440};
 }
@@ -1401,8 +1401,8 @@ taskForm.onsubmit=async event=>{
 };
 const RRULES={DAILY:'RRULE:FREQ=DAILY',WEEKDAYS:'RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR',WEEKLY:'RRULE:FREQ=WEEKLY'};
 let taskDropSaving=false;
-function taskDropMinute(pointer){
-  const {d,m}=pointAt(pointer);
+function taskDropMinute(pointer,target=wheel){
+  const {d,m}=pointAt(pointer,target);
   return d>=35&&d<=245?Math.floor(m/5)*5:null;
 }
 function bindTaskDrag(title){
@@ -1415,11 +1415,22 @@ function bindTaskDrag(title){
   title.addEventListener('pointerdown',down=>{
     if(!down.isPrimary||down.button!==0||taskDropSaving)return;
     const pointerId=down.pointerId;
-    let ghost;
+    let ghost, overlay, target=wheel;
+    let moved=false;
+    title.setPointerCapture(pointerId);
     const timer=setTimeout(()=>{
       if(!title.isConnected)return;
-      if(wheel.getBoundingClientRect().bottom<0||wheel.getBoundingClientRect().top>=innerHeight){
-        wheel.scrollIntoView({block:'center'});
+      const rect=wheel.getBoundingClientRect();
+      if(rect.top<0||rect.bottom>innerHeight||!rect.width){
+        overlay=document.createElement('div');
+        overlay.className='task-drop-overlay';
+        const hint=document.createElement('p');
+        hint.textContent='시계에 놓으면 10분 일정이 추가돼요';
+        target=document.createElement('canvas');
+        target.width=wheel.width;target.height=wheel.height;
+        target.getContext('2d').drawImage(wheel,0,0);
+        overlay.append(hint,target);
+        document.body.append(overlay);
       }
       ghost=document.createElement('div');
       ghost.className='task-drag-ghost';
@@ -1431,11 +1442,11 @@ function bindTaskDrag(title){
     function position(pointer){
       ghost.style.left=pointer.clientX+'px';
       ghost.style.top=pointer.clientY+'px';
-      wheel.classList.toggle('task-drop',taskDropMinute(pointer)!==null);
+      target.classList.toggle('task-drop',taskDropMinute(pointer,target)!==null);
     }
     function move(pointer){
       if(pointer.pointerId!==pointerId)return;
-      if(ghost){position(pointer);return;}
+      if(ghost){moved ||= Math.hypot(pointer.clientX-down.clientX,pointer.clientY-down.clientY)>10;position(pointer);return;}
       if(Math.hypot(pointer.clientX-down.clientX,pointer.clientY-down.clientY)>10)cleanup();
     }
     function cleanup(){
@@ -1444,11 +1455,12 @@ function bindTaskDrag(title){
       window.removeEventListener('pointerup',finish);
       window.removeEventListener('pointercancel',finish);
       ghost?.remove();
-      wheel.classList.remove('task-drop');
+      target.classList.remove('task-drop');
+      overlay?.remove();
     }
     function finish(pointer){
       if(pointer.pointerId!==pointerId)return;
-      const minute=ghost&&pointer.type==='pointerup'?taskDropMinute(pointer):null;
+      const minute=ghost&&moved&&pointer.type==='pointerup'?taskDropMinute(pointer,target):null;
       cleanup();
       if(minute!==null)saveTaskDrop(title.textContent,minute);
     }
